@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+
+
+
+<body>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+<div id="canvDiv" class="unselectable" style="position:absolute;">
+	<canvas id="backCanv" style="position: absolute; left: 0; top: 0; z-index: 0;"></canvas>
+	<canvas id="midCanv" style="position: absolute; left: 0; top: 0; z-index: 1;"></canvas>
+	<canvas id="frontCanv" oncontextmenu="return false;" style="position: absolute; left: 0; top: 0; z-index: 2;"></canvas>	
+</div>
+
+
+
+<script>
+
+const outGap = 7;
+const inGap = 5;
+var numX = 6;
+var numY = 11;
+var screenL;
+var screenT;
+var screenW;
+var screenH;
+const scrollAmt = 150;
+
+
+var mainDiv = document.getElementById("canvDiv");
+mainDiv.style.left = 0 + 'px';
+mainDiv.style.top = 0 + 'px';
+
+
+var backCanv = document.getElementById("backCanv");
+var backCx = backCanv.getContext("2d");
+
+var midCanv = document.getElementById("midCanv");
+var midCx = midCanv.getContext("2d");
+
+
+var frontCanv = document.getElementById("frontCanv");
+var frontCx = frontCanv.getContext("2d");
+
+midCx.fillStyle = 'RGB(25,124,247)';
+backCx.fillStyle = 'RGB(0,0,0)';
+document.addEventListener("touchstart", updateClick);
+document.addEventListener("touchend", updateClick);
+document.addEventListener("touchmove", updateClick);
+
+
+var toggling = false;
+
+function updateClick(e)
+{
+	midCx.clearRect(0,0, midCanv.width, midCanv.height);
+	midCx.fillStyle = 'RGB(25,124,247)';
+	var butInd = null;
+	if(e.type === "touchend" || !(e.touches))
+	{
+		toggling = false;
+		//do action if applicable
+	}
+	else
+	{
+		var sX = e.touches[0].pageX - screenL;
+		var sY = e.touches[0].pageY - screenT;
+		
+		if(screenH > screenW)
+		{
+			if(sY >= screenH - butS)
+			{
+				butInd = Math.floor(sX/butS);
+				if(e.type === "touchstart" && butInd !== null && !butts[butInd].prevent)
+				{
+					toggling = true;
+					window.scrollTo(0, 0);
+					reConfigure();
+				}
+				midCx.fillRect(screenL + butInd * butS, screenT + screenH - butS, butS, butS);
+			}
+		
+			else if(sX > startX && sX < screenW - startX && sY > startY && sY < screenH - butS - startY)
+			{
+				var xInd = Math.floor((sX - startX)/(boxS + inGap));
+				var yInd = Math.floor((sY - startY)/(boxS + inGap));
+				midCx.fillRect(screenL + startX + xInd * (boxS + inGap), screenT + startY + yInd * (boxS + inGap), boxS, boxS);
+			}
+			else
+			{
+				//do nothing
+			}
+		}
+		else
+		{
+			if(sX >= screenW - butS)
+			{
+				butInd = Math.floor((screenH -sY)/butS);
+				if(e.type === "touchstart" && butInd !== null && !butts[butInd].prevent)
+				{
+					toggling = true;
+					window.scrollTo(0, 0);
+					reConfigure();
+				}
+				midCx.fillRect(screenL + screenW - butS, screenT + screenH - (butInd + 1) * butS, butS, butS);
+			}
+		
+			else if(sX > startX && sX < screenW - butS - startX && sY > startY && sY < screenH - startY)
+			{
+				var xInd = Math.floor((sY - startY)/(boxS + inGap));
+				var yInd = Math.floor((sX - startX)/(boxS + inGap));
+				midCx.fillRect(screenL + startX + yInd * (boxS + inGap), screenT + startY + xInd * (boxS + inGap), boxS, boxS);
+			}
+			else
+			{
+				//do nothing
+			}
+		}
+					
+		
+	}
+	
+
+	if(!toggling) e.preventDefault();
+
+}
+
+var scrnBut = {
+	prevent: false,
+	imgInd: 0,
+	action: function(){
+		//do nothing
+	}
+};
+
+var menuBut = {
+	prevent: true,
+	imgInd: 1,
+	action: function(){
+		//load menu
+	}
+};
+
+var restartBut = {
+	prevent: true,
+	imgInd: 2,
+	action: function(){
+		loadLevel(false);
+	}
+};
+
+var undoBut = {
+	prevent: true,
+	imgInd: 3,
+	action: function(){
+		//undo
+	}
+};
+
+var hintsBut = {
+	prevent: true,
+	imgInd: 4,
+	action: function(){
+		//toggle hints
+	}
+};
+
+var butts = [scrnBut, menuBut, restartBut, undoBut, hintsBut]; 
+var butImg = document.createElement("img");
+butImg.onload = function() 
+{
+	setTimeout(function () 
+	{
+		backCx.save();
+		/* for(var i = 0; i < butts.length; i += 1)
+		{
+			console.log(butts[i].prevent);
+		} */
+		animate();
+	}, 300);
+/* 	loaded += 1;
+	if(loaded == 1) startIt(); */
+}
+butImg.src = "buttons.png";
+
+function reConfigure()
+{
+	screenL = (window.pageXOffset || document.documentElement.scrollLeft);
+	screenT = (window.pageYOffset || document.documentElement.scrollTop);
+	screenW = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
+	screenH = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight);
+	backCanv.width = screenW + screenL + scrollAmt;
+	backCanv.height = screenH + screenT + scrollAmt;
+	midCanv.width = screenW + screenL + scrollAmt;
+	midCanv.height = screenH + screenT + scrollAmt;
+	frontCanv.width = screenW + screenL + scrollAmt;
+	frontCanv.height = screenH + screenT + scrollAmt;
+	backCx.restore();
+	backCx.translate(screenL, screenT);
+	
+	if(screenH > screenW)
+	{
+		butS = screenW / butts.length;
+		var boxH = (screenH - butS - 2 * outGap - (numY-1) * inGap)/numY; 
+		var boxW = (screenW - 2 * outGap - (numX-1) * inGap)/numX; 
+		boxS = Math.min(boxH, boxW);
+		startX = (screenW - boxS * numX - (numX - 1) * inGap)/2;
+		startY = (screenH - butS - boxS * numY - (numY -1) * inGap)/2;
+	}
+	else
+	{
+		butS = screenH / butts.length;
+		var boxH = (screenH - 2 * outGap - (numX-1) * inGap)/numX; 
+		var boxW = (screenW - butS - 2 * outGap - (numY-1) * inGap)/numY; 
+		boxS = Math.min(boxH, boxW);
+		startX = (screenW - butS - boxS * numY - (numY - 1) * inGap)/2;
+		startY = (screenH - boxS * numX - (numX -1) * inGap)/2;
+	}
+	drawBase();
+}
+	
+function drawBase()
+{
+
+	backCx.clearRect(0, 0, backCanv.width, backCanv.height);
+	frontCx.clearRect(0, 0, backCanv.width, backCanv.height);
+	backCx.restore();
+	for(var i = 0; i < butts.length; i += 1)
+	{
+		if(screenH > screenW)
+		{
+			frontCx.drawImage(butImg, butts[i].imgInd * butImg.height, 0, butImg.height, butImg.height,
+				screenL + butS * i, screenT + screenH - butS, butS, butS);
+		}
+		else
+		{
+			frontCx.drawImage(butImg, butts[i].imgInd * butImg.height, 0, butImg.height, butImg.height,
+						 screenL + screenW - butS, screenT + screenH - butS * (i + 1), butS, butS);
+		}
+	}
+	
+	if(screenW > screenH)
+	{
+		backCx.save();
+		backCx.rotate(-Math.PI/2);
+		backCx.translate(-screenH, 0);
+		
+	}
+		
+	for(var i = 0; i < numX; i += 1)
+	{
+		for(var j = 0; j < numY; j += 1)
+		{
+			backCx.fillRect(startX + i * (boxS + inGap), startY + j * (boxS + inGap), boxS, boxS);
+			/* if(screenH > screenW)
+			{
+				backCx.fillRect(startX + i * (boxS + inGap), startY + j * (boxS + inGap), boxS, boxS);
+			}
+			else
+			{
+				/* backCx.save();
+				backCx.translate(0, screen
+				backCx.rotate(Math.PI/2); 
+				backCx.fillRect(startX + j * (boxS + inGap), startY + i * (boxS + inGap), boxS, boxS);
+			} */
+		}
+	}
+}
+
+function animate()
+{
+
+	var curL = (window.pageXOffset || document.documentElement.scrollLeft);
+	var curT = (window.pageYOffset || document.documentElement.scrollTop);
+	var curW = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
+	var curH = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight);
+	
+	if(!toggling && (curL !== screenL || curT !== screenT || curW !== screenW || curH !== screenH))
+	{
+		console.log('change');
+		reConfigure();
+	}
+		
+	requestAnimationFrame(animate);
+}
+
+
+
+</script>
+
+</body>
+
+</html> 

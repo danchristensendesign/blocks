@@ -99,12 +99,12 @@ function updateClick(e)
 			curRow = BUTTON;
 			curCol = Math.floor(curX/butS);
 			
-			if(e.type === "touchstart" && curCol > -1 && curCol < butts.length && !butts[curCol].prevent)
+			/* if(e.type === "touchstart" && curCol > -1 && curCol < butts.length && !butts[curCol].prevent)
 			{
 				toggling = true;
 				window.scrollTo(0, 0);
 				reConfigure();
-			}
+			} */
 			
 		}
 	
@@ -224,9 +224,10 @@ function animate()
 	}
 	
 	midCx.clearRect(0,0,sMin, sMaj);
+	
 	if(curRow !== null && curCol !== null)
 	{
-		midCx.fillRect(2, 2, boxS, boxS);
+		midCx.strokeText(curRow + ', ' + curCol, 2, 2);
 		if(curRow === BUTTON)
 		{
 			midCx.fillRect(butInd * butS, sMaj - butS, butS, butS);

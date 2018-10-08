@@ -54,7 +54,7 @@ backCx.fillStyle = 'RGB(0,0,0)';
 document.addEventListener("touchstart", updateClick);
 document.addEventListener("touchend", updateClick);
 document.addEventListener("touchmove", updateClick);
-
+midCx.fillStyle = 'RGB(25,124,247)';
 
 var toggling = false;
 
@@ -64,9 +64,6 @@ var curCol = null;
 
 function updateClick(e)
 {
-	midCx.clearRect(0,0, midCanv.width, midCanv.height);
-	midCx.fillStyle = 'RGB(25,124,247)';
-
 	if(e.type === "touchend" || !(e.touches))
 	{
 		toggling = false;
@@ -171,6 +168,7 @@ function drawBase()
 	
 	backCx.translate(0, screenT);
 	frontCx.translate(0, screenT);
+	midCx.translate(0, screenT);
 	
 	if(flipped)
 	{

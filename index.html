@@ -97,7 +97,7 @@ function updateClick(e)
 		if(curY >= sMaj - butS)
 		{
 			curRow = BUTTON;
-			curCol = Math.floor(curX/butS);
+			if(butS) curCol = Math.floor(curX/butS);
 			
 			/* if(e.type === "touchstart" && curCol > -1 && curCol < butts.length && !butts[curCol].prevent)
 			{
@@ -227,7 +227,8 @@ function animate()
 	
 	if(curRow !== null && curCol !== null)
 	{
-		midCx.strokeText(curRow + ', ' + curCol, 2, 2);
+		midCxfont="30px";
+		midCx.strokeText(curRow + ', ' + curCol, 2, 10);
 		if(curRow === BUTTON)
 		{
 			midCx.fillRect(butInd * butS, sMaj - butS, butS, butS);

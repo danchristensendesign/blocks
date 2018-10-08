@@ -142,8 +142,10 @@ function reConfigure()
 	frontCanv.width = screenW + scrollAmt;
 	frontCanv.height = screenH + scrollAmt;
 	backCx.restore();
+	midCx.restore();
 	frontCx.restore();
 	backCx.save();
+	midCx.save();
 	frontCx.save();
 
 	sMaj = Math.max(screenW, screenH);

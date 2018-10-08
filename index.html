@@ -54,7 +54,7 @@ backCx.fillStyle = 'RGB(0,0,0)';
 document.addEventListener("touchstart", updateClick);
 document.addEventListener("touchend", updateClick);
 document.addEventListener("touchmove", updateClick);
-midCx.fillStyle = 'RGB(25,124,247)';
+
 
 var toggling = false;
 
@@ -99,7 +99,7 @@ function updateClick(e)
 			curRow = BUTTON;
 			curCol = Math.floor(curX/butS);
 			
-			if(e.type === "touchstart" && !butts[butInd].prevent)
+			if(e.type === "touchstart" && !butts[curCol].prevent)
 			{
 				toggling = true;
 				window.scrollTo(0, 0);
@@ -172,10 +172,15 @@ function drawBase()
 	frontCx.translate(0, screenT);
 	midCx.translate(0, screenT);
 	
+	midCx.fillStyle = 'RGB(25,124,247)';
+	
 	if(flipped)
 	{
 		backCx.rotate(-Math.PI/2);
 		backCx.translate(-sMin, 0);
+		
+		midCx.rotate(-Math.PI/2);
+		midCx.translate(-sMin, 0);
 		
 	}
 	for(var i = 0; i < butts.length; i += 1)

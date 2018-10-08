@@ -99,7 +99,7 @@ function updateClick(e)
 			curRow = BUTTON;
 			curCol = Math.floor(curX/butS);
 			
-			if(e.type === "touchstart" && && curCol > -1 && curCol < butts.length && !butts[curCol].prevent)
+			if(e.type === "touchstart" && curCol > -1 && curCol < butts.length && !butts[curCol].prevent)
 			{
 				toggling = true;
 				window.scrollTo(0, 0);

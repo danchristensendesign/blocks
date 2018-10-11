@@ -207,7 +207,76 @@ function drawBase()
 			backCx.fillRect(startMin + i * (boxS + inGap), startMaj + j * (boxS + inGap), boxS, boxS);
 		}
 	}
+	
+	drawPicker();	
+	
+	
 }
+
+var minR = 30;
+var cX = sMin/2;
+var cY = sMaj/2;
+
+function drawPicker()
+{
+	backCx.fillStyle = 'RGB(100,100,100)';
+	backCx.strokeStyle = 'RGB(100, 100, 100)';
+	backCx.beginPath();
+	
+	cX = sMin/2;
+	cY = sMaj/2;
+	var gap = 3;
+	var halfGap = gap/2;
+	
+	//backCx.globalAlpha = .8;
+	backCx.fillStyle = 'RGB(200,200,200)';
+	backCx.strokeStyle = 'RGB(0,0,0)';
+	backCx.lineWidth = gap;
+	backCx.arc(cX, cY, minR * 3, 0, 2 * Math.PI);
+	backCx.fill();
+	backCx.stroke();
+	backCx.beginPath();
+	backCx.arc(cX, cY, minR * 2, 0, 2 * Math.PI);
+	backCx.stroke();
+	
+	for(var grp = 0; grp < 2; grp+= 1)
+	{
+		var outR;
+		var inR;
+		
+		if(!grp)
+		{
+			outR = 2 * minR - halfGap;
+			inR = minR + halfGap;
+		}
+		else
+		{
+			outR = 3 * minR - gap;
+			inR = 2 * minR + halfGap;
+		}
+		var theta = Math.PI/8;
+		var thetaInc = Math.PI/4;
+		
+		for(var slice = 0; slice < 4; slice+=1 )
+		{
+			theta += thetaInc;
+			var dX = 3 * minR * Math.cos(theta);
+			var dY = 3 * minR * Math.sin(theta);
+
+			backCx.beginPath();
+			backCx.moveTo(cX + dX, cY - dY);
+			backCx.lineTo(cX - dX, cY + dY);
+			backCx.stroke();
+
+		}
+	}
+	
+	backCx.beginPath();
+	backCx.arc(cX, cY, minR, 0, 2 * Math.PI);
+	backCx.fill();
+	backCx.stroke();
+}
+
 
 function animate()
 {

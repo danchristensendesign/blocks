@@ -269,14 +269,15 @@ function getXY(e)
 	}
 	else
 	{
-		x = e.touches[0].pageX;
-		y = e.touches[0].pageY;
 		switch(e.type)
 		{
 			case 'touchstart': type = DOWN; break;
-			case 'touchmove': type = MOVE; break;
+			case 'touchmove': return [0, 0, MOVE]; break;
 			case 'touchend': type = UP; break;
 		}
+		x = e.touches[0].pageX;
+		y = e.touches[0].pageY;
+		
 	}
 	
 	if(flipped) 

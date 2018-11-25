@@ -51,17 +51,17 @@ const BUTTON = -1;
 const ZOOM = 2; 
 const TARGET = 3;
 var act = null;
-function updateClick(e)
+/* function updateClick(e)
 {
 	if(e.type === "touchend" || !(e.touches)) act = null;
 	else act = BUTTON; 
 
 	
-}
+} */
 
 
 
-/* function updateClick(e)
+function updateClick(e)
 {
 	//ignore defaults if we're not zooming
 	if(act !== ZOOM) e.preventDefault();
@@ -143,7 +143,7 @@ function updateClick(e)
 		}
 	}
 	if(!toggling) e.preventDefault();
-} */
+}
 
 
 

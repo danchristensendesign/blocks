@@ -258,22 +258,23 @@ function getXY(e)
 	
 	if(e.type.substr(0, 5) === 'mouse') 
 	{
-		x = event.clientX;
-		y = event.clientY;
 		switch(e.type)
 		{
 			case 'mousedown': type = DOWN; break;
 			case 'mousemove': type = MOVE; break;
 			case 'mouseup': type = UP; break;	
 		}
+		x = event.clientX;
+		y = event.clientY;
+		
 	}
 	else
 	{
 		switch(e.type)
 		{
 			case 'touchstart': type = DOWN; break;
-			case 'touchmove': return [0, 0, MOVE]; break;
-			case 'touchend': type = UP; break;
+			case 'touchmove': type = MOVE; break;
+			case 'touchend': return [0, 0, UP]; break;
 		}
 		x = e.touches[0].pageX;
 		y = e.touches[0].pageY;

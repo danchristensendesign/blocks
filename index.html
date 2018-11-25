@@ -53,8 +53,8 @@ const TARGET = 3;
 var act = null;
 function updateClick(e)
 {
-	/* if(e.type === "touchend" || !(e.touches)) action = null;
-	else action = BUTTON; */
+	if(e.type === "touchend" || !(e.touches)) act = null;
+	else act = BUTTON; 
 	act = BUTTON;
 	
 }
@@ -411,7 +411,7 @@ function animate()
 	k++;
 	k = k % 5;
 	console.log(act);
-	var t = (act === null)? k: 2;
+	var t = (act === null)? 0: 2;
 	midCx.fillStyle = 'rgb(90,90,90)';
 	midCx.fillRect(t * butS, sMaj - butS, butS, butS);
 	//console.log(l);

@@ -16,598 +16,459 @@
 
 
 <script>
-
-const playerCol = 'RGB(230,230,230)';
-const magOffCol = 'RGB(111,183,214)';
-const magOnCol = 'RGB(133,292,93)';
-const magRingCol = 'RGB(100, 170, 200)';//'RGB(251,182,209)';
-const wormCol =  'RGB(30,30,255)';// 'RGB(0,0, 200)';
-const wormRingCol = 'RGB(192,5,248)';
-const AID = 3;
-const playing = 0;
-const winning = 1;
-const dying = 2;
-const won = 3;
-const R = -100;
-const screenR = .635;
-var screenW = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
-var screenH = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight);
-var actH = Math.min(screenH, screenW / screenR);
-var actW = (actH *screenR);
-
+//const BUTTON = -1;
+const outGap = 7;
+const inGap = 5;
+var numX = 6;
+var numY = 11;
+var screenL;
+var screenT;
+var screenW;
+var screenH;
+var sMaj;
+var sMin;
+var flipped;
+const scrollAmt = 150;
 var mainDiv = document.getElementById("canvDiv");
 mainDiv.style.left = 0 + 'px';
 mainDiv.style.top = 0 + 'px';
-var offX = (screenW - actW)/2;
-var offY = (screenH - actH)/2;
-
 var backCanv = document.getElementById("backCanv");
-backCanv.width = screenW;
-backCanv.height = screenH + 300;
 var backCx = backCanv.getContext("2d");
-
 var midCanv = document.getElementById("midCanv");
-midCanv.width = screenW;
-midCanv.height = screenH;
 var midCx = midCanv.getContext("2d");
-
-
 var frontCanv = document.getElementById("frontCanv");
-frontCanv.width = screenW;
-frontCanv.height = screenH;
 var frontCx = frontCanv.getContext("2d");
-
-document.addEventListener("mousemove", updateHover);
-document.addEventListener("mousedown", updateClick);
-document.addEventListener("mouseup", updateClick);
-
-function touchMove(e) {
-    e.preventDefault(); 
-	updateHover(e);
-};
-
-document.addEventListener("touchmove", touchMove, {passive: false});
+midCx.fillStyle = 'RGB(25,124,247)';
+backCx.fillStyle = 'RGB(0,0,0)';
 document.addEventListener("touchstart", updateClick);
 document.addEventListener("touchend", updateClick);
+document.addEventListener("touchmove", updateClick);
+var act = null;
+var curRow = null;
+var curCol = null;
 
+const BUTTON = -1;
+const ZOOM = 2; 
+const TARGET = 3;
 
-function gameToScreen(game, isX)
+function updateClick(e)
 {
-	if(isX) return (game /100 * actW);
-	else return (game/100 * actH);
+	/* if(e.type === "touchend" || !(e.touches)) action = null;
+	else action = BUTTON; */
+	act = BUTTON;
+	
 }
 
-function magnet(arr){
-	this.x = arr[0];
-	this.y = arr[1];
-	this.r = arr[2];
-	
-	this.sx = gameToScreen(arr[0], true);
-	this.sy = gameToScreen(arr[1], false);
-	this.sr = gameToScreen(arr[2], true);
-	
-	this.isOn = false;
-	this.tR = this.sr;
-}
 
-var magnets = {
-	arr: [],
-	init: function(newArr) 
+
+/* function updateClick(e)
+{
+	//ignore defaults if we're not zooming
+	if(act !== ZOOM) e.preventDefault();
+	
+	//get the position
+	var XY = getXY(e);
+	
+	//check for new event
+	if(e.type === "touchstart")
 	{
-		this.arr = [];
-		var len = newArr.length;
-		for (var i = 0; i < len; i++) 
+		//check for button
+		if(curY >= sMaj - butS)
 		{
-			this.arr.push(new magnet(newArr[i]));
+			act = BUTTON;
+
+			//check for zoom button
+			if(!butts[Math.floor(curX/butS)].prevent)
+			{
+				
+				act = ZOOM;
+				window.scrollTo(0, 0);
+				reConfigure();
+			}			
 		}
-	}
-}
-
-
-
-
-
-
-
-
-var player = {
-	r: 0,
-	pos: {x: 0, y: 0},
-	vel: {x: 0, y: 0},
-	
-	sr:0,
-	spos: {x: 0, y: 0},
-	state: playing,
-	init: function(arr)
-	{
-		this.pos.x = arr[0]; 
-		this.pos.y = arr[1];
-		this.r = arr[2];
-		this.sr = gameToScreen(arr[2], true);
-		this.vel.x = 0;
-		this.vel.y = 0;
-		this.state = playing;
-		this.update();
-	},
-	
-	update: function()
-	{
-		this.spos.x = gameToScreen(this.pos.x, true);
-		this.spos.y = gameToScreen(this.pos.y, false);
-	}
-		
-};
-
-var worm = {
-	x: 0, 
-	y: 0,
-	r: 0, 
-	
-	sx: 0, 
-	sy: 0,
-	sr: 0,
-	tr: 0,
-	trInc : 5,
-	init: function(arr)
-	{
-		this.x = arr[0];
-		this.y = arr[1];
-		this.r = arr[2];
-		
-		this.sx = gameToScreen(arr[0], true);
-		this.sy = gameToScreen(arr[1], false);
-		this.sr = gameToScreen(arr[2], true);
-		this.tr = this.sr;
-		this.trInc = this.sr/6;
-	}
-};
-
-
-
-var levels = [
-	[
-		[[50,15,15]],
-		
-		[50,30,6],
-		[50,85,3]
-	],
-	
- 	[
-		[[30,15,15],
-		[70,15, 15]],
-		
-		[50,30,6],
-		[50,85,3]
-	],
-	
-	[
-		[[25,15,20],
-		[70,15, 5]],
-		
-		[50,30,6],
-		[50,85,3]
-	],
-	
-	[
-		[[20,80,10],
-		[70,15, 15]],
-		
-		[50,30,6],
-		[50,85,3]
-	],
-	
-	[
-		[[30,50,10],
-		[80,15, 15]],
-		
-		[30,30,6],
-		[50,85,3]
-	],
-	
-	[
-		[[30,50,10],
-		[80,15, 15]],
-		
-		[10,70,6],
-		[50,85,3]
-	],
-	
-	[
-		[[90,20, 10],
-		[40, 50, 10]],
-		
-		[90,60,6],
-		[50,75,3]
-	],
-	
-	[
-		[[90,20,10],
-		[30,25, 15]],
-		
-		[10,70,6],
-		[50,85,3]
-	],
-	
-	[
-		[[90,60,10],
-		[40,50,30]],
-		
-		[90,80,6],
-		[40,80,3]
-	],
-	
-	[
-		[[60,20, 10],
-		[40, 40, 10],
-		[60,60, 10],
-		[40,80, 10]],
-		
-		[50,10,6],
-		[50,90,3]
-	],
-	
-	[
-		[[60,20, 10],
-		[40, 40, 10],
-		[60,60, 10],
-		[70, 40, 10],
-		[40,80, 10],
-		[30,60, 10]],
-		
-		[50,10,6],
-		[50,90,3]
-	], 
-		
-];
-var lastTime;
-var levelInd = 0;
-startGame();
-function startGame()
-{
-	
-	document.body.onload = function()
-	{
-		setTimeout(function () 
-		{
-			screenW = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
-			screenH = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight);
-			actH = Math.min(screenH, screenW / screenR);
-			actW = (actH *screenR);
-			offX = (screenW - actW)/2;
-			offY = (screenH - actH)/2;
-			mainDiv.style.left = 0 + 'px';
-			mainDiv.style.top = 0 + 'px';
-			backCanv.width = screenW;
-			backCanv.height = screenH + 300;
-			midCanv.width = screenW;
-			midCanv.height = screenH;
-			frontCanv.width = screenW;
-			frontCanv.height = screenH;
-			
-			backCx.fillStyle = 'RGB(0,0,0)';
-			backCx.fillRect(0,0,screenW, screenH);
-			//backCanv.height += 60;
-			//window.scrollTo(0, 50);
-			//scrolled = 1;
-			loadLevel();
-			
-		}, 1000);
-	}
-}
-
-function loadLevel()
-{
-	if(levelInd >= levels.length) levelInd = levels.length - 1;
-
-	var level = levels[levelInd];
-	magnets.init(level[0]);
-	worm.init(level[1]);
-	player.init(level[2]);
-	lastTime = new Date().getTime();
-	drawT();
-
-	
-}
-
-
-//player.vel.y = -100;
-
-
-function drawT()
-{
-	midCx.clearRect(0, 0, screenW, screenH);
-	midCx.fillStyle = 'RGB(233, 233, 233)';
-	for(var i = 0; i < magnets.arr.length; i+= 1)
-	{
-		drawCircle(midCx, magOffCol, magnets.arr[i].sx, magnets.arr[i].sy, magnets.arr[i].sr);
-		/* var tR = magnets.arr[i].sr;
-		
-		midCx.strokeStyle = 'RGB(0,0,0)';
-		while(tR > 3)
-		{
-			midCx.beginPath();
-			midCx.arc(magnets.arr[i].sx + offX, magnets.arr[i].sy + offY, tR, 0, 2 * Math.PI);
-			midCx.stroke();
-			tR -= 1/100 * actW;
-		} */
-		
-		
-			
-	}
-	drawCircle(midCx, wormCol, worm.sx, worm.sy, worm.sr);
-}
-
-function drawCircle(cx, col, x, y, r)
-{
-	cx.beginPath();
-	cx.globalAlpha = 1;
-	cx.fillStyle = col;
-	cx.arc(x + offX , y + offY, r, 0, 2 * Math.PI);
-	cx.fill();
-}
-
-function strokeCircle(cx, col, wid, fadeIn, x, y, r, fullR)
-{
-	cx.beginPath();
-	cx.lineWidth = wid;
-	cx.strokeStyle = col;
-	cx.globalAlpha = (fadeIn)? 1-r/fullR: Math.max(r - fullR * .3, 0)/fullR;
-	cx.arc(x + offX , y + offY, r, 0, 2 * Math.PI);
-	cx.stroke();
-}
-
-var dead = false;
-function drawFrame(dt)
-{
-	
-	frontCx.fillStyle = 'RGB(255,255,255)';
-	frontCx.clearRect(0, 0, screenW, screenH);
-	
-
-	worm.tr -= dt * 7;
-	if(worm.tr < 0) worm.tr = worm.sr;
-	var tr = worm.tr;
-	while(tr > 0)
-	{
-		strokeCircle(frontCx, wormRingCol, actW * .007, true, worm.sx, worm.sy, tr, worm.sr);
-		tr -= worm.trInc;
-	}
-	tr = worm.tr + worm.trInc;
-	while(tr < worm.sr)
-	{
-		strokeCircle(frontCx, wormRingCol, actW * .007, true, worm.sx, worm.sy, tr, worm.sr);
-		tr += worm.trInc;
-	}
-	
-	drawCircle(frontCx, playerCol, player.spos.x, player.spos.y, player.sr);
-	
-	for(var i = 0; i < magnets.arr.length; i+=1 )
-	{
-		var mag = magnets.arr[i];
-		if(mag.isOn)
-		{
-			drawCircle(frontCx, magOnCol, mag.sx, mag.sy, mag.sr);
-		}
+		//otherwise it's a new target
 		else
 		{
-			mag.tR -= dt * 30;
-			if(mag.tR < 3) mag.tR = mag.sr- actW/100;
-			strokeCircle(frontCx, magRingCol, actW/100, false, mag.sx, mag.sy, mag.tR, mag.sr);
+			act = TARGET;
 		}
 	}
 	
-	if(player.state !== playing && player.state !== winning)
-	{
-		if(player.state === dying)
+	//check for event end, apply whatever is necessary
+	if(e.type === "touchend" || !(e.touches))
+	{		
+		if(!act === ZOOM && curRow !== null && curCol !== null)
 		{
-			frontCx.fillStyle = 'RGB(255,255,255)';
-			frontCx.globalAlpha = .3;
+			if(act === TARGET)
+			{
+				
+			}
+			else
+			{
+				
+			}
 		}
-		else
-		{
-			frontCx.fillStyle = wormRingCol;
-			frontCx.globalAlpha = .6;
-		}
-		//frontCx.fillRect(offX, offY, actW, actH);
-		frontCx.fillRect(0, 0, screenW, screenH);
+		curRow = null;
+		curCol = null;
+		act = null;
 	}
 	
-	
-	
-	
-		
-}
-
-	
-function updateHover(event)
-{
-	//console.log('h');
-	pos(event);
-}
-
-function updateClick(event)
-{
-	pos(event);
-}
-
-function pos(event)
-{
-	//console.log(player.state);
-	/* if(event.type === 'mousedown' || event.type === 'touchstart')
-	{
-		scrolled = (scrolled)? 0 : 200;
-		window.scrollTo(0, scrolled);
-		return;
-	} */
-		
-	
-	if((event.type === 'mousedown' || event.type === 'touchstart') && (player.state === dying || player.state === won))
-	{
-		if(player.state == won) levelInd = 0;
-		loadLevel();
-		
-	}
+	//otherwise, it's a start or move, update where we're at
 	else
 	{
-		for(var i = 0; i < magnets.arr.length; i+=1 )
+		//zoom-- make sure it's highlighted regardless of position
+		if(act === ZOOM)
 		{
-			magnets.arr[i].isOn = false;
-		}
-		if(event.type.substr(0,5) === 'mouse')
-		{
-			checkIt([event.clientX - offX, event.clientY - offY]);
+			curRow = BUTTON;
+			curCol = ZOOM_COL;
 		}
 		else
 		{
-			for (i=0; i < event.touches.length; i++) 
-			{  
-				checkIt([event.touches[i].pageX - offX, event.touches[i].pageY - offY]);
+			
+			curRow = null;
+			curCol = null;
+			
+			if(act === BUTTON && curY >= sMaj - butS)
+			{
+				curRow = BUTTON;
+				curCol = Math.floor(curX/butS);
+				if(curCol === ZOOM_COL) curCol == null;
 			}
-		}	
-	}
-}
-
-function checkIt(arr)
-{
-	for(var i = 0; i < magnets.arr.length; i+=1 )
-	{
-		var mag = magnets.arr[i];
-		if(distance(arr[0], arr[1], mag.sx, mag.sy) <= mag.sr)
-		{
-			mag.isOn = true;
-			console.log('on');
+			else if(act === TARGET && curX > startMin && curX < sMin - startMin && 
+				curY > startMaj && curY < sMaj - butS - startMaj)
+			{
+				curCol = Math.floor((curX - startMin)/(boxS + inGap));
+				curRow = Math.floor((curY - startMaj)/(boxS + inGap));
+				
+			}
 		}
-		/* else
-		{
-			mag.isOn = false;
-			console.log('off');
-		} */
 	}
-}
-/* function drawIt(xy)
-{
-	if(xy[0] > offX && xy[0] < (screenW - offX) && xy[1] > offY && xy[1] < (screenH - offY))
-	{
-		frontCx.fillStyle = 'RGB(200,0,0)';
-		frontCx.beginPath();
-		frontCx.arc(xy[0], xy[1], 5, 0, 2 * Math.PI);
-		frontCx.fill();
-	}
-	console.log("d");
+	if(!toggling) e.preventDefault();
 } */
 
 
-requestAnimationFrame(updateFrame);
 
-
-
-function updateFrame()
+function getXY(e)
 {
-	var newTime = new Date().getTime();
-	var dt = (newTime - lastTime)/1000;
-	lastTime = newTime;
-	
-	//sum forces on player
-	if(player.state === playing || player.state === winning)
+	var x, y;
+	/* if(e.type.substr(0, 5) === 'mouse') 
 	{
-		var fx = 0;
-		var fy = 0;
-		
-		if(player.state === winning)
-		{
-			var dx = player.spos.x - worm.sx;
-			var dy = player.spos.y - worm.sy;
-			//var fMag = -2000;
-			var d = Math.pow(Math.pow(dx, 2) + Math.pow(dy, 2), 1/2);
-			var fMag = .1* R * Math.pow(1, 2) * Math.pow(d, 1.4);
-			var theta = Math.atan2(dy, dx);
-			fx += Math.cos(theta) * fMag;
-			fy += Math.sin(theta) * fMag;
-		}
-			
-		for(var i = 0; i < magnets.arr.length; i+=1 )
-		{
-			if(magnets.arr[i].isOn)
-			{
-				var mag = magnets.arr[i];
-				var dx = player.spos.x - mag.sx;
-				var dy = player.spos.y - mag.sy;
-				var d = Math.pow(Math.pow(dx, 2) + Math.pow(dy, 2), 1/2);
-				var fMag = R * Math.pow(mag.sr, 2) / Math.pow(d, 1.4);
-				var theta = Math.atan2(dy, dx);
-				fx += Math.cos(theta) * fMag;
-				fy += Math.sin(theta) * fMag;
-			}
-		}
-		player.vel.x += fx * dt;
-		player.vel.y += fy * dt;
-		player.spos.x += player.vel.x * dt;
-		player.spos.y += player.vel.y * dt;
-		//console.log(fy);
-		/* if(player.spos.x > actW) player.vel.x = -Math.abs(player.vel.x)
-		else if(player.spos.x < 0) player.vel.x = Math.abs(player.vel.x)
-		if(player.spos.y > actH) player.vel.y = -Math.abs(player.vel.y)
-		else if(player.spos.y < 0) player.vel.y = Math.abs(player.vel.y) */
-		
-		checkStatus();
+		x = event.clientX;
+		y = event.clientY;
 	}
-	drawFrame(dt);
-	
-	
-	requestAnimationFrame(updateFrame);
-}
-
-	
-
-function checkStatus()
-{
-	var wormR = distance(player.spos.x, player.spos.y, worm.sx, worm.sy);
-	
-	//check for fully entered worm
-	if(player.state === winning && wormR <  player.sr)
+	else */
 	{
-		player.state = won;
-		if(++levelInd < levels.length) loadLevel();
+		x = e.touches[0].pageX;
+		y = e.touches[0].pageY;
 	}
-
-	else if(wormR <= (worm.sr + player.sr + AID))
+	
+	if(flipped) 
 	{
-		player.state = winning;
-		
+		return [sMin - (y - screenT), x - screenL];
 	}
-		/* if(distance(player.spos.x, player.spos.y, worm.sx, worm.sy) <= (worm.sr - player.sr + AID))
-		{
-			player.state = winning;
-			if(++levelInd < levels.length) loadLevel();
-
-		} */
 	else
 	{
-		/* if(player.spos.x > actW - player.sr || player.spos.x < 0 + player.sr || player.spos.y > actH - player.sr || player.spos.y < + player.sr) player.state = dying; */
-		if(player.spos.x+offX > screenW - player.sr || player.spos.x+offX < 0 + player.sr || player.spos.y+offY > screenH - player.sr || player.spos.y+offY < + player.sr) player.state = dying;
+		return [y - screenL, x - screenT];
+	}
+}
+
+
+/* function updateClick(e)
+{
+	if(e.type === "touchend" || !(e.touches))
+	{
+		toggling = false;
+		
+		//do action if applicable
+		if(curRow !== null && curCol !== null)
+		{
+			
+		}
+		curRow = null;
+		curCol = null;
+	}
+	else
+	{
+		curRow = null;
+		curCol = null;
+		var curX, curY;
+		
+		if(flipped) 
+		{
+			curX = sMin - (e.touches[0].pageY - screenT);
+			curY = e.touches[0].pageX - screenL;
+		}
 		else
 		{
-			for(var i = 0; i < magnets.arr.length; i+=1 )
-			{
-				if(distance(player.spos.x, player.spos.y, magnets.arr[i].sx, magnets.arr[i].sy) <= (magnets.arr[i].sr + player.sr))
-				{
-					player.state = dying;
-				}
-			}
+			curX = e.touches[0].pageX - screenL;
+			curY = e.touches[0].pageY - screenT;
 		}
 		
+		//on button target
+		if(curY >= sMaj - butS)
+		{
+			curRow = BUTTON;
+			if(butS) curCol = Math.floor(curX/butS);
+			
+			if(e.type === "touchstart" && !butts[curCol].prevent)
+			{
+				toggling = true;
+				window.scrollTo(0, 0);
+				reConfigure();
+			}
+			
+		}
+	
+		//on grid target
+		else if(curX > startMin && curX < sMin - startMin && 
+				curY > startMaj && curY < sMaj - butS - startMaj)
+		{
+			curCol = Math.floor((curX - startMin)/(boxS + inGap));
+			curRow = Math.floor((curY - startMaj)/(boxS + inGap));
+			
+		}
 	}
-	if(player.state !== playing && player.state !== winning)
-	{
-		player.vel.x = 0;
-		player.vel.y = 0;
-	}
-		
-}
-function distance(x1, y1, x2, y2)
+	if(!toggling) e.preventDefault();
+} */
+function reConfigure()
 {
-	return Math.pow(Math.pow(x2-x1, 2) + Math.pow(y2-y1, 2), 1/2);
+	screenT = (window.pageYOffset || document.documentElement.scrollTop);
+	window.scrollTo(0, (screenT)? scrollAmt: 0);
+	
+	screenT = (window.pageYOffset || document.documentElement.scrollTop);
+	screenL = (window.pageXOffset || document.documentElement.scrollLeft);
+	
+	screenW = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
+	screenH = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight);
+	backCanv.width = screenW + scrollAmt;
+	backCanv.height = screenH +  scrollAmt;
+	midCanv.width = screenW + scrollAmt;
+	midCanv.height = screenH + scrollAmt;
+	frontCanv.width = screenW + scrollAmt;
+	frontCanv.height = screenH + scrollAmt;
+	backCx.restore();
+	midCx.restore();
+	frontCx.restore();
+	backCx.save();
+	midCx.save();
+	frontCx.save();
+	sMaj = Math.max(screenW, screenH);
+	sMin = Math.min(screenW, screenH);
+	flipped = (screenW > screenH);
+	
+	butS = sMin / butts.length;
+	boxS = Math.min((sMaj - butS - 2 * outGap - (numY-1) * inGap)/numY, 
+					(sMin - 2 * outGap - (numX-1) * inGap)/numX);
+					
+	startMin = (sMin - boxS * numX - (numX - 1) * inGap)/2;
+	startMaj = (sMaj - butS - boxS * numY - (numY -1) * inGap)/2;
+	
+	drawBase();
 }
+	
+function drawBase()
+{
+	backCx.clearRect(0, 0, backCanv.width, backCanv.height);
+	frontCx.clearRect(0, 0, backCanv.width, backCanv.height);
+	
+	backCx.translate(0, screenT);
+	frontCx.translate(0, screenT);
+	midCx.translate(0, screenT);
+	
+	midCx.fillStyle = 'RGB(25,124,247)';
+	
+	if(flipped)
+	{
+		backCx.rotate(-Math.PI/2);
+		backCx.translate(-sMin, 0);
+		
+		midCx.rotate(-Math.PI/2);
+		midCx.translate(-sMin, 0);
+		
+	}
+	for(var i = 0; i < butts.length; i += 1)
+	{
+		
+		
+		if(!flipped)
+		{
+			frontCx.drawImage(butImg, butts[i].imgInd * butImg.height, 0, butImg.height, butImg.height,
+				butS * i, sMaj - butS, butS, butS);
+		}
+		else
+		{
+			frontCx.drawImage(butImg, butts[i].imgInd * butImg.height, 0, butImg.height, butImg.height,
+						 sMaj - butS, sMin - butS * (i + 1), butS, butS);
+		}
+	}
+	
+		
+	for(var i = 0; i < numX; i += 1)
+	{
+		for(var j = 0; j < numY; j += 1)
+		{
+			backCx.fillRect(startMin + i * (boxS + inGap), startMaj + j * (boxS + inGap), boxS, boxS);
+		}
+	}
+	
+	drawPicker();	
+	
+	
+}
+var minR = 30;
+var cX = sMin/2;
+var cY = sMaj/2;
+function drawPicker()
+{
+	backCx.fillStyle = 'RGB(100,100,100)';
+	backCx.strokeStyle = 'RGB(100, 100, 100)';
+	backCx.beginPath();
+	
+	cX = sMin/2;
+	cY = sMaj/2;
+	var gap = 3;
+	var halfGap = gap/2;
+	
+	//backCx.globalAlpha = .8;
+	backCx.fillStyle = 'RGB(200,200,200)';
+	backCx.strokeStyle = 'RGB(0,0,0)';
+	backCx.lineWidth = gap;
+	backCx.arc(cX, cY, minR * 3, 0, 2 * Math.PI);
+	backCx.fill();
+	backCx.stroke();
+	backCx.beginPath();
+	backCx.arc(cX, cY, minR * 2, 0, 2 * Math.PI);
+	backCx.stroke();
+	
+	for(var grp = 0; grp < 2; grp+= 1)
+	{
+		var outR;
+		var inR;
+		
+		if(!grp)
+		{
+			outR = 2 * minR - halfGap;
+			inR = minR + halfGap;
+		}
+		else
+		{
+			outR = 3 * minR - gap;
+			inR = 2 * minR + halfGap;
+		}
+		var theta = Math.PI/8;
+		var thetaInc = Math.PI/4;
+		
+		for(var slice = 0; slice < 4; slice+=1 )
+		{
+			theta += thetaInc;
+			var dX = 3 * minR * Math.cos(theta);
+			var dY = 3 * minR * Math.sin(theta);
+			backCx.beginPath();
+			backCx.moveTo(cX + dX, cY - dY);
+			backCx.lineTo(cX - dX, cY + dY);
+			backCx.stroke();
+		}
+	}
+	
+	backCx.beginPath();
+	backCx.arc(cX, cY, minR, 0, 2 * Math.PI);
+	backCx.fill();
+	backCx.stroke();
+}
+
+var k = 0;
+
+function animate()
+{
+	
+	
+	var curL = (window.pageXOffset || document.documentElement.scrollLeft);
+	var curT = (window.pageYOffset || document.documentElement.scrollTop);
+	var curW = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
+	var curH = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight);
+	
+	if(act !== ZOOM && (curL !== screenL || curT !== screenT || curW !== screenW || curH !== screenH))
+	{
+		console.log('change');
+		reConfigure();
+	}
+	
+	midCx.clearRect(0,0,sMin, sMaj);
+	
+	if(curRow !== null && curCol !== null)
+	{
+		midCxfont="30px";
+		midCx.strokeText(curRow + ', ' + curCol, 2, 10);
+		if(curRow === BUTTON)
+		{
+			midCx.fillRect(curCol * butS, sMaj - butS, butS, butS);
+		}
+		else
+		{
+			midCx.fillRect(startMin + curCol * (boxS + inGap), startMaj + curRow * (boxS + inGap), boxS, boxS);
+		}
+	}	
+	midCx.clearRect(0,0, sMin, sMaj);
+	k++;
+	k = k % 5;
+	midCx.fillStyle = 'rgb(90,90,90)';
+	midCx.fillRect(k * butS, sMaj - butS, butS, butS);
+	//console.log(l);
+		
+	requestAnimationFrame(animate);
+}
+var scrnBut = {
+	prevent: false,
+	imgInd: 0,
+	action: function(){
+		//do nothing
+	}
+};
+var ZOOM_COL = 0;
+var menuBut = {
+	prevent: true,
+	imgInd: 1,
+	action: function(){
+		//load menu
+	}
+};
+var restartBut = {
+	prevent: true,
+	imgInd: 2,
+	action: function(){
+		loadLevel(false);
+	}
+};
+var undoBut = {
+	prevent: true,
+	imgInd: 3,
+	action: function(){
+		//undo
+	}
+};
+var hintsBut = {
+	prevent: true,
+	imgInd: 4,
+	action: function(){
+		//toggle hints
+	}
+};
+var butts = [scrnBut, menuBut, restartBut, undoBut, hintsBut]; 
+var butImg = document.createElement("img");
+butImg.onload = function() 
+{
+	setTimeout(function () 
+	{
+		backCx.save();
+		/* for(var i = 0; i < butts.length; i += 1)
+		{
+			console.log(butts[i].prevent);
+		} */
+		animate();
+	}, 300);
+/* 	loaded += 1;
+	if(loaded == 1) startIt(); */
+}
+butImg.src = "buttons.png";
 </script>
 
 </body>

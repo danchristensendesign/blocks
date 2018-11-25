@@ -410,6 +410,7 @@ function animate()
 	midCx.clearRect(0,0, sMin, sMaj);
 	k++;
 	k = k % 5;
+	var t = (act === null)? k: 2;
 	midCx.fillStyle = 'rgb(90,90,90)';
 	midCx.fillRect(k * butS, sMaj - butS, butS, butS);
 	//console.log(l);

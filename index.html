@@ -506,10 +506,10 @@ function animate()
 	var curW = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
 	var curH = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight);
 	
-	if(act !== ZOOM && (curL !== screenL || curT !== screenT || curW !== screenW || curH !== screenH))
+	if(act !=== ZOOM && (curL !== screenL || curT !== screenT || curW !== screenW || curH !== screenH))
 	{
 		console.log('change');
-	//	reConfigure();
+		reConfigure();
 	}
 	
 	midCx.clearRect(0,0,sMin, sMaj);

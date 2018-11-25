@@ -53,8 +53,9 @@ const TARGET = 3;
 
 function updateClick(e)
 {
-	if(e.type === "touchend" || !(e.touches)) action = null;
-	else action = BUTTON;
+	/* if(e.type === "touchend" || !(e.touches)) action = null;
+	else action = BUTTON; */
+	action = BUTTON;
 	
 }
 
@@ -408,10 +409,10 @@ function animate()
 	switch(action)
 	{
 		
-		case BUTTON: l = 3;
-		case TARGET: l = 2;
-		case ZOOM: l = 1;
-		default: l = 4;
+		case BUTTON: l = 2;
+		case TARGET: l = 1;
+		case ZOOM: l = 4;
+		default: l = 3;
 	}
 	midCx.fillStyle = 'rgb(90,90,90)';
 	midCx.fillRect(l * butS, sMaj - butS, butS, butS);

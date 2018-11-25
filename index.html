@@ -43,7 +43,7 @@ backCx.fillStyle = 'RGB(0,0,0)';
 document.addEventListener("touchstart", updateClick);
 document.addEventListener("touchend", updateClick);
 document.addEventListener("touchmove", updateClick);
-var action = null;
+var act = null;
 var curRow = null;
 var curCol = null;
 
@@ -55,7 +55,7 @@ function updateClick(e)
 {
 	/* if(e.type === "touchend" || !(e.touches)) action = null;
 	else action = BUTTON; */
-	action = BUTTON;
+	act = BUTTON;
 	
 }
 
@@ -64,7 +64,7 @@ function updateClick(e)
 /* function updateClick(e)
 {
 	//ignore defaults if we're not zooming
-	if(action !== ZOOM) e.preventDefault();
+	if(act !== ZOOM) e.preventDefault();
 	
 	//get the position
 	var XY = getXY(e);
@@ -75,13 +75,13 @@ function updateClick(e)
 		//check for button
 		if(curY >= sMaj - butS)
 		{
-			action = BUTTON;
+			act = BUTTON;
 
 			//check for zoom button
 			if(!butts[Math.floor(curX/butS)].prevent)
 			{
 				
-				action = ZOOM;
+				act = ZOOM;
 				window.scrollTo(0, 0);
 				reConfigure();
 			}			
@@ -89,16 +89,16 @@ function updateClick(e)
 		//otherwise it's a new target
 		else
 		{
-			action = TARGET;
+			act = TARGET;
 		}
 	}
 	
 	//check for event end, apply whatever is necessary
 	if(e.type === "touchend" || !(e.touches))
 	{		
-		if(!action === ZOOM && curRow !== null && curCol !== null)
+		if(!act === ZOOM && curRow !== null && curCol !== null)
 		{
-			if(action === TARGET)
+			if(act === TARGET)
 			{
 				
 			}
@@ -109,14 +109,14 @@ function updateClick(e)
 		}
 		curRow = null;
 		curCol = null;
-		action = null;
+		act = null;
 	}
 	
 	//otherwise, it's a start or move, update where we're at
 	else
 	{
 		//zoom-- make sure it's highlighted regardless of position
-		if(action === ZOOM)
+		if(act === ZOOM)
 		{
 			curRow = BUTTON;
 			curCol = ZOOM_COL;
@@ -127,13 +127,13 @@ function updateClick(e)
 			curRow = null;
 			curCol = null;
 			
-			if(action === BUTTON && curY >= sMaj - butS)
+			if(act === BUTTON && curY >= sMaj - butS)
 			{
 				curRow = BUTTON;
 				curCol = Math.floor(curX/butS);
 				if(curCol === ZOOM_COL) curCol == null;
 			}
-			else if(action === TARGET && curX > startMin && curX < sMin - startMin && 
+			else if(act === TARGET && curX > startMin && curX < sMin - startMin && 
 				curY > startMaj && curY < sMaj - butS - startMaj)
 			{
 				curCol = Math.floor((curX - startMin)/(boxS + inGap));
@@ -383,7 +383,7 @@ function animate()
 	var curW = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
 	var curH = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight);
 	
-	if(action !== ZOOM && (curL !== screenL || curT !== screenT || curW !== screenW || curH !== screenH))
+	if(act !== ZOOM && (curL !== screenL || curT !== screenT || curW !== screenW || curH !== screenH))
 	{
 		console.log('change');
 		reConfigure();
@@ -406,7 +406,7 @@ function animate()
 	}	
 	midCx.clearRect(0,0, sMin, sMaj);
 	var l;
-	switch(action)
+	switch(act)
 	{
 		
 		case BUTTON: l = 2;

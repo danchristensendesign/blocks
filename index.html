@@ -16,10 +16,7 @@
 
 
 <script>
-
-
-
-const BUTTON = -1;
+//const BUTTON = -1;
 const outGap = 7;
 const inGap = 5;
 var numX = 6;
@@ -32,37 +29,140 @@ var sMaj;
 var sMin;
 var flipped;
 const scrollAmt = 150;
-
-
 var mainDiv = document.getElementById("canvDiv");
 mainDiv.style.left = 0 + 'px';
 mainDiv.style.top = 0 + 'px';
-
-
 var backCanv = document.getElementById("backCanv");
 var backCx = backCanv.getContext("2d");
-
 var midCanv = document.getElementById("midCanv");
 var midCx = midCanv.getContext("2d");
-
-
 var frontCanv = document.getElementById("frontCanv");
 var frontCx = frontCanv.getContext("2d");
-
 midCx.fillStyle = 'RGB(25,124,247)';
 backCx.fillStyle = 'RGB(0,0,0)';
 document.addEventListener("touchstart", updateClick);
 document.addEventListener("touchend", updateClick);
 document.addEventListener("touchmove", updateClick);
-
-
-var toggling = false;
-
-
+var action = null;
 var curRow = null;
 var curCol = null;
 
+const BUTTON = -1;
+const ZOOM = 2; 
+const TARGET = 3;
+
 function updateClick(e)
+{
+	//ignore defaults if we're not zooming
+	if(!curRow === ZOOM) e.preventDefault();
+	
+	//get the position
+	var XY = getXY(e);
+	
+	//check for new event
+	if(e.type === "touchstart")
+	{
+		//check for button
+		if(curY >= sMaj - butS)
+		{
+			curCol = Math.floor(curX/butS);
+			action = BUTTONS;
+			
+			//check for zoom button
+			if(!butts[curCol].prevent)
+			{
+				action = ZOOM;
+				window.scrollTo(0, 0);
+				reConfigure();
+			}			
+		}
+		//otherwise it's a new target
+		else
+		{
+			action = TARGET;
+		}
+	}
+	
+	//check for event end, apply whatever is necessary
+	if(e.type === "touchend" || !(e.touches))
+	{		
+		if(!action === ZOOM && curRow !== null && curCol !== null)
+		{
+			if(action === TARGET)
+			{
+				
+			}
+			else
+			{
+				
+			}
+		}
+		curRow = null;
+		curCol = null;
+		action = null;
+	}
+	
+	//otherwise, it's a start or move, update where we're at
+	else
+	{
+		//zoom-- make sure it's highlighted regardless of position
+		if(action === ZOOM)
+		{
+			curRow = BUTTON;
+			curCol = ZOOM_COL;
+		}
+		else
+		{
+			
+			curRow = null;
+			curCol = null;
+			
+			if(action === BUTTON && curY >= sMaj - butS)
+			{
+				curRow = BUTTON;
+				curCol = Math.floor(curX/butS);
+				if(curCol === ZOOM_COL) curCol == null;
+			}
+			else if(action === TARGET && curX > startMin && curX < sMin - startMin && 
+				curY > startMaj && curY < sMaj - butS - startMaj)
+			{
+				curCol = Math.floor((curX - startMin)/(boxS + inGap));
+				curRow = Math.floor((curY - startMaj)/(boxS + inGap));
+				
+			}
+		}
+	}
+	if(!toggling) e.preventDefault();
+}
+
+
+
+function getXY(e)
+{
+	var x, y;
+	/* if(e.type.substr(0, 5) === 'mouse') 
+	{
+		x = event.clientX;
+		y = event.clientY;
+	}
+	else */
+	{
+		x = e.touches[0].pageX;
+		y = e.touches[0].pageY;
+	}
+	
+	if(flipped) 
+	{
+		return [sMin - (y - screenT), x - screenL];
+	}
+	else
+	{
+		return [y - screenL, x - screenT];
+	}
+}
+
+
+/* function updateClick(e)
 {
 	if(e.type === "touchend" || !(e.touches))
 	{
@@ -117,14 +217,8 @@ function updateClick(e)
 			
 		}
 	}
-
 	if(!toggling) e.preventDefault();
-
-}
-
-
-
-
+} */
 function reConfigure()
 {
 	screenT = (window.pageYOffset || document.documentElement.scrollTop);
@@ -147,7 +241,6 @@ function reConfigure()
 	backCx.save();
 	midCx.save();
 	frontCx.save();
-
 	sMaj = Math.max(screenW, screenH);
 	sMin = Math.min(screenW, screenH);
 	flipped = (screenW > screenH);
@@ -164,7 +257,6 @@ function reConfigure()
 	
 function drawBase()
 {
-
 	backCx.clearRect(0, 0, backCanv.width, backCanv.height);
 	frontCx.clearRect(0, 0, backCanv.width, backCanv.height);
 	
@@ -212,11 +304,9 @@ function drawBase()
 	
 	
 }
-
 var minR = 30;
 var cX = sMin/2;
 var cY = sMaj/2;
-
 function drawPicker()
 {
 	backCx.fillStyle = 'RGB(100,100,100)';
@@ -262,12 +352,10 @@ function drawPicker()
 			theta += thetaInc;
 			var dX = 3 * minR * Math.cos(theta);
 			var dY = 3 * minR * Math.sin(theta);
-
 			backCx.beginPath();
 			backCx.moveTo(cX + dX, cY - dY);
 			backCx.lineTo(cX - dX, cY + dY);
 			backCx.stroke();
-
 		}
 	}
 	
@@ -276,8 +364,6 @@ function drawPicker()
 	backCx.fill();
 	backCx.stroke();
 }
-
-
 function animate()
 {
 	
@@ -286,7 +372,7 @@ function animate()
 	var curW = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
 	var curH = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight);
 	
-	if(!toggling && (curL !== screenL || curT !== screenT || curW !== screenW || curH !== screenH))
+	if(action !== ZOOM && (curL !== screenL || curT !== screenT || curW !== screenW || curH !== screenH))
 	{
 		console.log('change');
 		reConfigure();
@@ -310,8 +396,6 @@ function animate()
 		
 	requestAnimationFrame(animate);
 }
-
-
 var scrnBut = {
 	prevent: false,
 	imgInd: 0,
@@ -319,7 +403,7 @@ var scrnBut = {
 		//do nothing
 	}
 };
-
+var ZOOM_COL = 0;
 var menuBut = {
 	prevent: true,
 	imgInd: 1,
@@ -327,7 +411,6 @@ var menuBut = {
 		//load menu
 	}
 };
-
 var restartBut = {
 	prevent: true,
 	imgInd: 2,
@@ -335,7 +418,6 @@ var restartBut = {
 		loadLevel(false);
 	}
 };
-
 var undoBut = {
 	prevent: true,
 	imgInd: 3,
@@ -343,7 +425,6 @@ var undoBut = {
 		//undo
 	}
 };
-
 var hintsBut = {
 	prevent: true,
 	imgInd: 4,
@@ -351,7 +432,6 @@ var hintsBut = {
 		//toggle hints
 	}
 };
-
 var butts = [scrnBut, menuBut, restartBut, undoBut, hintsBut]; 
 var butImg = document.createElement("img");
 butImg.onload = function() 
@@ -369,8 +449,6 @@ butImg.onload = function()
 	if(loaded == 1) startIt(); */
 }
 butImg.src = "buttons.png";
-
-
 </script>
 
 </body>

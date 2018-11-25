@@ -53,6 +53,15 @@ const TARGET = 3;
 
 function updateClick(e)
 {
+	if(e.type === "touchend" || !(e.touches)) action = null;
+	else action = BUTTON;
+	
+}
+
+
+
+/* function updateClick(e)
+{
 	//ignore defaults if we're not zooming
 	if(action !== ZOOM) e.preventDefault();
 	
@@ -62,8 +71,7 @@ function updateClick(e)
 	//check for new event
 	if(e.type === "touchstart")
 	{
-		action = BUTTON;
-		/* //check for button
+		//check for button
 		if(curY >= sMaj - butS)
 		{
 			action = BUTTON;
@@ -81,14 +89,13 @@ function updateClick(e)
 		else
 		{
 			action = TARGET;
-		} */
+		}
 	}
 	
 	//check for event end, apply whatever is necessary
 	if(e.type === "touchend" || !(e.touches))
 	{		
-		action = null;
-		/* if(!action === ZOOM && curRow !== null && curCol !== null)
+		if(!action === ZOOM && curRow !== null && curCol !== null)
 		{
 			if(action === TARGET)
 			{
@@ -101,7 +108,7 @@ function updateClick(e)
 		}
 		curRow = null;
 		curCol = null;
-		action = null; */
+		action = null;
 	}
 	
 	//otherwise, it's a start or move, update where we're at
@@ -135,7 +142,7 @@ function updateClick(e)
 		}
 	}
 	if(!toggling) e.preventDefault();
-}
+} */
 
 
 

@@ -16,6 +16,12 @@
 
 
 <script>
+
+
+const DOWN = 0;
+const MOVE = 1;
+const UP = 2;
+
 //const BUTTON = -1;
 const outGap = 7;
 const inGap = 5;
@@ -40,9 +46,13 @@ var frontCanv = document.getElementById("frontCanv");
 var frontCx = frontCanv.getContext("2d");
 midCx.fillStyle = 'RGB(25,124,247)';
 backCx.fillStyle = 'RGB(0,0,0)';
-document.addEventListener("touchstart", updateClick);
-document.addEventListener("touchend", updateClick);
-document.addEventListener("touchmove", updateClick);
+document.addEventListener("touchstart", updateClickM);
+document.addEventListener("touchend", updateClickM);
+document.addEventListener("touchmove", updateClickM);
+
+document.addEventListener("mousedown", updateClickM);
+document.addEventListener("mousemove", updateClickM);
+document.addEventListener("mouseup", updateClickM);
 
 var curRow = null;
 var curCol = null;
@@ -58,6 +68,100 @@ var act = null;
 
 	
 } */
+
+function updateClickM(e)
+{
+	//console.log(e);
+	//ignore defaults if we're not zooming
+	if(act !== ZOOM) e.preventDefault();
+	
+	//get the position
+	var XY = getXY(e);
+	
+	//check for new event
+	if(XY[2] === DOWN)
+	{
+		console.log('down');
+		//check for button
+		if(XY[1] >= sMaj - butS)
+		{
+			act = BUTTON;
+			console.log('but');
+
+			//check for zoom button
+			if(!butts[Math.floor(XY[0]/butS)].prevent)
+			{
+				console.log('zoom');
+				act = ZOOM;
+				window.scrollTo(0, 0);
+				reConfigure();
+			}			
+		}
+		//otherwise it's a new target
+		else
+		{
+			console.log('board');
+			act = TARGET;
+		}
+	}
+	
+	//check for event end, apply whatever is necessary
+	if(XY[2] === UP)
+	{		
+		if(!act === ZOOM && curRow !== null && curCol !== null)
+		{
+			if(act === TARGET)
+			{
+				
+			}
+			else
+			{
+				
+			}
+		}
+		curRow = null;
+		curCol = null;
+		console.log('up');
+		act = null;
+	}
+	
+	//otherwise, it's a start or move, update where we're at
+	else
+	{
+		//zoom-- make sure it's highlighted regardless of position
+		if(act === ZOOM)
+		{
+			curRow = BUTTON;
+			curCol = ZOOM_COL;
+		}
+		else
+		{
+			
+			curRow = null;
+			curCol = null;
+			
+			if(act === BUTTON && XY[1] >= sMaj - butS)
+			{
+				curRow = BUTTON;
+				curCol = Math.floor(XY[0]/butS);
+				if(curCol === ZOOM_COL)
+				{
+					console.log('bad zoom');
+					curCol = null;
+				}
+			}
+			else if(act === TARGET && XY[0] > startMin && XY[0] < sMin - startMin && 
+				XY[1] > startMaj && XY[1] < sMaj - butS - startMaj)
+			{
+				curCol = Math.floor((XY[0] - startMin)/(boxS + inGap));
+				curRow = Math.floor((XY[1] - startMaj)/(boxS + inGap));
+				
+			}
+		}
+	}
+	console.log(act);
+}
+
 
 
 
@@ -150,24 +254,38 @@ function getXY(e)
 {
 	var x;
 	var y;
-	/* if(e.type.substr(0, 5) === 'mouse') 
+	var type;
+	
+	if(e.type.substr(0, 5) === 'mouse') 
 	{
 		x = event.clientX;
 		y = event.clientY;
+		switch(e.type)
+		{
+			case 'mousedown': type = DOWN; break;
+			case 'mousemove': type = MOVE; break;
+			case 'mouseup': type = UP; break;	
+		}
 	}
-	else */
+	else
 	{
 		x = e.touches[0].pageX;
 		y = e.touches[0].pageY;
+		switch(e.type)
+		{
+			case 'touchstart': type = DOWN; break;
+			case 'touchmove': type = MOVE; break;
+			case 'touchend': type = UP; break;
+		}
 	}
 	
 	if(flipped) 
 	{
-		return [sMin - (y - screenT), x - screenL];
+		return [sMin - (y - screenT), x - screenL, type];
 	}
 	else
 	{
-		return [y - screenL, x - screenT];
+		return [y - screenL, x - screenT, type];
 	}
 }
 
@@ -407,13 +525,13 @@ function animate()
 			midCx.fillRect(startMin + curCol * (boxS + inGap), startMaj + curRow * (boxS + inGap), boxS, boxS);
 		}
 	}	
-	midCx.clearRect(0,0, sMin, sMaj);
+/* 	midCx.clearRect(0,0, sMin, sMaj);
 	k++;
 	k = k % 5;
 	//console.log(act);
 	var t = (act === null)? 0: 2;
 	midCx.fillStyle = 'rgb(90,90,90)';
-	midCx.fillRect(t * butS, sMaj - butS, butS, butS);
+	midCx.fillRect(t * butS, sMaj - butS, butS, butS); */
 	//console.log(l);
 		
 	requestAnimationFrame(animate);

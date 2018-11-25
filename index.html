@@ -54,7 +54,7 @@ const TARGET = 3;
 function updateClick(e)
 {
 	//ignore defaults if we're not zooming
-	if(!curRow === ZOOM) e.preventDefault();
+	if(action !== ZOOM) e.preventDefault();
 	
 	//get the position
 	var XY = getXY(e);
@@ -66,7 +66,7 @@ function updateClick(e)
 		if(curY >= sMaj - butS)
 		{
 			curCol = Math.floor(curX/butS);
-			action = BUTTONS;
+			action = BUTTON;
 			
 			//check for zoom button
 			if(!butts[curCol].prevent)

@@ -73,12 +73,12 @@ function updateClickM(e)
 {
 	//console.log(e);
 	//ignore defaults if we're not zooming
-	
+	if(e.type.indexOf('move') > -1 && act !== ZOOM) e.preventDefault();
 	
 	//get the position
 	var XY = getXY(e);
-	console.log(XY[0] + ', ' + XY[1] + ', ' +  screenT + ', ' + screenL);
-	if(act !== ZOOM && XY[2] === MOVE) e.preventDefault();
+
+	
 	
 	//check for new event
 	if(XY[2] === DOWN)
@@ -286,11 +286,11 @@ function getXY(e)
 	
 	if(flipped) 
 	{
-		return [sMin - (y ), x , type];
+		return [sMin - y, x, type];
 	}
 	else
 	{
-		return [x , y , type];
+		return [x, y, type];
 	}
 	
 	/* if(flipped) 

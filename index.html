@@ -77,8 +77,8 @@ function updateClickM(e)
 	
 	//get the position
 	var XY = getXY(e);
-	
-	//if(act !== ZOOM && XY[2] === MOVE) e.preventDefault();
+	console.log(XY[0] + ', ' + XY[1] + ', ' +  screenT + ', ' + screenL);
+	if(act !== ZOOM && XY[2] === MOVE) e.preventDefault();
 	
 	//check for new event
 	if(XY[2] === DOWN)
@@ -161,19 +161,20 @@ function updateClickM(e)
 			}
 		}
 	}
-	console.log(act);
+	//console.log(act);
 }
 
 
 
 
-function updateClick(e)
+/* function updateClick(e)
 {
 	//ignore defaults if we're not zooming
 	//if(act !== ZOOM) e.preventDefault();
 	
 	//get the position
 	var XY = getXY(e);
+	console.log(XY[0] + ', ' + XY[1]);
 	
 	//check for new event
 	if(e.type === "touchstart")
@@ -248,7 +249,7 @@ function updateClick(e)
 			}
 		}
 	}
-}
+} */
 
 
 
@@ -285,12 +286,21 @@ function getXY(e)
 	
 	if(flipped) 
 	{
+		return [sMin - (y ), x , type];
+	}
+	else
+	{
+		return [x , y , type];
+	}
+	
+	/* if(flipped) 
+	{
 		return [sMin - (y - screenT), x - screenL, type];
 	}
 	else
 	{
-		return [x - screenT, y - screenL, type];
-	}
+		return [x - screenL, y - screenT, type];
+	} */
 }
 
 

@@ -287,8 +287,10 @@ function getXY(e)
 			case 'touchmove': type = MOVE; break;
 			case 'touchend': return [0, 0, UP]; break;
 		}
-		x = e.touches[0].pageX - screenL;
-		y = e.touches[0].pageY - screenT;
+		/* x = e.touches[0].pageX - screenL;
+		y = e.touches[0].pageY - screenT; */
+		x = e.touches[0].clientX;
+		y = e.touches[0].clientY;
 		
 	}
 	
@@ -546,9 +548,9 @@ function animate()
 		{
 			midCx.beginPath();
 			//midCx.strokeText(targCen[0] + ', ' + targCen[1], 2, 10);
-			midCx.arc(screenL + targCen[0], screenT + targCen[1], targCircR, 0, Math.PI * 2);
-			midCx.arc(screenL + targCen[0], screenT + targCen[1], targInR, 0, Math.PI * 2);
-			midCx.arc(screenL + targCen[0], screenT + targCen[1], targOutR, 0, Math.PI * 2);
+			midCx.arc(targCen[0], targCen[1], targCircR, 0, Math.PI * 2);
+			midCx.arc(targCen[0], targCen[1], targInR, 0, Math.PI * 2);
+			midCx.arc(targCen[0], targCen[1], targOutR, 0, Math.PI * 2);
 			midCx.stroke();
 			//midCx.fillRect(startMin + curCol * (boxS + inGap), startMaj + curRow * (boxS + inGap), boxS, boxS);
 		}

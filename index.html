@@ -279,8 +279,8 @@ function getXY(e)
 			case 'touchmove': type = MOVE; break;
 			case 'touchend': return [0, 0, UP]; break;
 		}
-		x = e.touches[0].pageX;
-		y = e.touches[0].pageY;
+		x = e.touches[0].pageX - screenL;
+		y = e.touches[0].pageY - screenT;
 		
 	}
 	

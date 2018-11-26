@@ -48,7 +48,7 @@ midCx.fillStyle = 'RGB(25,124,247)';
 backCx.fillStyle = 'RGB(0,0,0)';
 document.addEventListener("touchstart", updateClickM);
 document.addEventListener("touchend", updateClickM);
-document.addEventListener("touchmove", updateClickM);
+document.addEventListener("touchmove", updateClickM, {passive: false});
 
 document.addEventListener("mousedown", updateClickM);
 document.addEventListener("mousemove", updateClickM);

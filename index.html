@@ -69,9 +69,10 @@ var act = null;
 	
 } */
 var targCen = [null, null];
-const targCircR = 25;
-const targInR = 50;
-const targOutR = 70;
+var targPos = [null, null];
+const targCircR = 30;
+const targInR = 60;
+const targOutR = 85;
 
 function updateClickM(e)
 {
@@ -159,6 +160,7 @@ function updateClickM(e)
 			}
 			else if(act === TARGET)
 			{
+				targPos = XY.slice(0, 2);
 				/* var dist = distance(targCen, XY);
 				if(dist < targRin) targRing = 0&& XY[0] > startMin && XY[0] < sMin - startMin && 
 				XY[1] > startMaj && XY[1] < sMaj - butS - startMaj)
@@ -546,12 +548,80 @@ function animate()
 		}
 		else
 		{
-			midCx.beginPath();
+			
+			var dist = distance(targPos, targCen);
+			
+			
 			//midCx.strokeText(targCen[0] + ', ' + targCen[1], 2, 10);
-			midCx.arc(targCen[0], targCen[1], targCircR, 0, Math.PI * 2);
-			midCx.arc(targCen[0], targCen[1], targInR, 0, Math.PI * 2);
-			midCx.arc(targCen[0], targCen[1], targOutR, 0, Math.PI * 2);
+			
+			
+			
+			var theta = Math.atan2(targPos[1]-targCen[1], targPos[0]-targCen[0]);
+			if(theta < 0) theta += Math.PI * 2;
+			theta += Math.PI/8;
+			var sect = Math.floor(theta/(Math.PI/4))%8;
+			var sAng = -Math.PI/8 + sect * Math.PI/4;
+			var eAng = sAng + Math.PI/4;
+			var oR = 0;
+			var iR = 0
+			if(dist < targCircR)
+			{
+				sAng = 0;
+				eAng = 2 * Math.PI;
+				oR = targCircR;
+				iR = 0;
+			}
+			else if(dist < targInR)
+			{
+				oR = targInR;
+				iR = targCircR;	
+			}
+			else if(dist < targOutR) 
+			{
+				oR = targOutR;
+				iR = targInR;
+			}
+			midCx.fillStyle = 'RGB(25,124,247)';
+			midCx.beginPath();
+			midCx.arc(targCen[0], targCen[1], oR, sAng, eAng);
+			midCx.arc(targCen[0], targCen[1], iR, eAng, sAng, true);
+			midCx.fill();
+			
+			midCx.beginPath();
+			midCx.arc(targCen[0], targCen[1], targCircR, 0, 2 * Math.PI);
 			midCx.stroke();
+			midCx.lineWidth = 3;
+			midCx.fillStyle = 'RGB(255,255,255)';
+			for(var s = 0; s < 8; s+= 1)
+			{
+				for(var r = 0; r < 2; r += 1)
+				{
+					var or, ir;
+					if(!r)
+					{
+						or = targInR;
+						ir = targCircR;
+					}
+					else
+					{
+						or = targOutR;
+						ir = targInR;
+					}
+					var sang = -Math.PI/8 + s * Math.PI/4;
+					var eang = sang + Math.PI/4;
+					midCx.beginPath();
+					midCx.arc(targCen[0], targCen[1], or, sang, eang);
+					midCx.arc(targCen[0], targCen[1], ir, eang, sang, true);
+					midCx.globalAlpha = .3;
+					midCx.fill();
+					midCx.globalAlpha = 1;
+					midCx.stroke();
+				}
+			}
+			
+			
+			
+			
 			//midCx.fillRect(startMin + curCol * (boxS + inGap), startMaj + curRow * (boxS + inGap), boxS, boxS);
 		}
 	}	
@@ -565,6 +635,11 @@ function animate()
 	//console.log(l);
 		
 	requestAnimationFrame(animate);
+}
+
+function distance(arr1, arr2)
+{
+	return Math.pow(Math.pow(arr1[0] - arr2[0], 2) + Math.pow(arr1[1] - arr2[1], 2) ,.5);
 }
 var scrnBut = {
 	prevent: false,

@@ -68,6 +68,10 @@ var act = null;
 
 	
 } */
+var targCen = [null, null];
+const targCircR = 25;
+const targInR = 50;
+const targOutR = 70;
 
 function updateClickM(e)
 {
@@ -102,6 +106,7 @@ function updateClickM(e)
 		//otherwise it's a new target
 		else
 		{
+			targCen = XY.slice(0, 2);
 			console.log('board');
 			act = TARGET;
 		}
@@ -152,12 +157,15 @@ function updateClickM(e)
 					curCol = null;
 				}
 			}
-			else if(act === TARGET && XY[0] > startMin && XY[0] < sMin - startMin && 
+			else if(act === TARGET)
+			{
+				/* var dist = distance(targCen, XY);
+				if(dist < targRin) targRing = 0&& XY[0] > startMin && XY[0] < sMin - startMin && 
 				XY[1] > startMaj && XY[1] < sMaj - butS - startMaj)
 			{
 				curCol = Math.floor((XY[0] - startMin)/(boxS + inGap));
 				curRow = Math.floor((XY[1] - startMaj)/(boxS + inGap));
-				
+				 */
 			}
 		}
 	}
@@ -526,17 +534,23 @@ function animate()
 	
 	midCx.clearRect(0,0,sMin, sMaj);
 	
-	if(curRow !== null && curCol !== null)
+	if(act !== null)
 	{
 		midCxfont="30px";
-		midCx.strokeText(curRow + ', ' + curCol, 2, 10);
-		if(curRow === BUTTON)
+		
+		if(curRow === BUTTON && curCol !== null)
 		{
 			midCx.fillRect(curCol * butS, sMaj - butS, butS, butS);
 		}
 		else
 		{
-			midCx.fillRect(startMin + curCol * (boxS + inGap), startMaj + curRow * (boxS + inGap), boxS, boxS);
+			midCx.beginPath();
+			//midCx.strokeText(targCen[0] + ', ' + targCen[1], 2, 10);
+			midCx.arc(screenL + targCen[0], screenT + targCen[1], targCircR, 0, Math.PI * 2);
+			midCx.arc(screenL + targCen[0], screenT + targCen[1], targInR, 0, Math.PI * 2);
+			midCx.arc(screenL + targCen[0], screenT + targCen[1], targOutR, 0, Math.PI * 2);
+			midCx.stroke();
+			//midCx.fillRect(startMin + curCol * (boxS + inGap), startMaj + curRow * (boxS + inGap), boxS, boxS);
 		}
 	}	
 /* 	midCx.clearRect(0,0, sMin, sMaj);

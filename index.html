@@ -73,6 +73,9 @@ var targPos = [null, null];
 const targCircR = 35;
 const targInR = 75;
 const targOutR = 110;
+const targCircT = 15;
+const targInT = 30;
+const targOutT = 45;
 
 function updateClickM(e)
 {
@@ -564,19 +567,19 @@ function animate()
 			var eAng = sAng + Math.PI/4;
 			var oR = 0;
 			var iR = 0
-			if(dist < targCircR)
+			if(dist < targCircT)
 			{
 				sAng = 0;
 				eAng = 2 * Math.PI;
 				oR = targCircR;
 				iR = 0;
 			}
-			else if(dist < targInR)
+			else if(dist < targInT)
 			{
 				oR = targInR;
 				iR = targCircR;	
 			}
-			else if(dist < targOutR) 
+			else if(dist < targOutT) 
 			{
 				oR = targOutR;
 				iR = targInR;

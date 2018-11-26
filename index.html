@@ -73,10 +73,8 @@ var targPos = [null, null];
 const targCircR = 35;
 const targInR = 75;
 const targOutR = 110;
-const targCircT = 15;
-const targInT = 30;
-const targOutT = 45;
 
+var pos = [2,2];
 function updateClickM(e)
 {
 	//console.log(e);
@@ -551,8 +549,101 @@ function animate()
 		}
 		else
 		{
+			const targCircT = boxS/2;
+			const targInT = targCircT + boxS;
+			const targOutT = targInT + boxS;
 			
+			
+			midCx.fillStyle = 'RGB(25,124,247)';
+			midCx.fillRect(startMin + pos[1] * (boxS + inGap), startMaj + pos[0] * (boxS + inGap), boxS, boxS);
+			for(var s = 0; s < 8; s+= 1)
+			{
+				for(var r = 1; r < 3; r += 1)
+				{
+					var cos = Math.cos(s * Math.PI/4);
+					var xSgn = (cos > 0)? 1: -1;
+					var xVal = ((Math.abs(cos) > .7)? r: 0) * xSgn;
+					var sin = Math.sin(s * Math.PI/4);
+					var ySgn = (sin > 0)? 1: -1;
+					var yVal = ((Math.abs(sin) > .7)? r: 0) * ySgn;
+					midCx.fillRect(startMin + (pos[0] + xVal) * (boxS + inGap), startMaj + (pos[1] + yVal) * (boxS + inGap), boxS, boxS);
+				}
+			}
+			
+					
+					
 			var dist = distance(targPos, targCen);
+			var rC = boxS/2;
+			var ri = rC + boxS;
+			var ro = ri + boxS;
+			var theta = Math.atan2(targPos[1]-targCen[1], targPos[0]-targCen[0]);
+			if(theta < 0) theta += Math.PI * 2;
+			theta += Math.PI/8;
+			var sect = Math.floor(theta/(Math.PI/4))%8;
+			var sAng = -Math.PI/8 + sect * Math.PI/4;
+			var eAng = sAng + Math.PI/4;
+			var oR = 0;
+			var iR = 0
+			var scl;
+			if(dist < targCircT)
+			{
+				scl = 0;
+			}
+			else if(dist < targInT)
+			{
+				scl = 1;	
+			}
+			else if(dist < targOutT) 
+			{
+				scl = 2;
+			}
+			var cos = Math.cos(sect * Math.PI/4);
+			var xSgn = (cos > 0)? 1: -1;
+			var xVal = ((Math.abs(cos) > .7)? scl: 0) * xSgn;
+			var sin = Math.sin(sect * Math.PI/4);
+			var ySgn = (sin > 0)? 1: -1;
+			var yVal = ((Math.abs(sin) > .7)? scl: 0) * ySgn;
+			midCx.fillStyle = 'RGB(255,255,255)';
+			midCx.fillRect(startMin + (pos[0] + xVal) * (boxS + inGap), startMaj + (pos[1] + yVal) * (boxS + inGap), boxS, boxS);
+			/*
+			midCx.fillStyle = 'RGB(25,124,247)';
+			midCx.beginPath();
+			midCx.arc(targCen[0], targCen[1], oR, sAng, eAng);
+			midCx.arc(targCen[0], targCen[1], iR, eAng, sAng, true);
+			midCx.fill();
+			
+			midCx.beginPath();
+			midCx.arc(targCen[0], targCen[1], targCircR, 0, 2 * Math.PI);
+			midCx.stroke();
+			midCx.lineWidth = 3;
+			midCx.fillStyle = 'RGB(255,255,255)';
+			for(var s = 0; s < 8; s+= 1)
+			{
+				for(var r = 0; r < 2; r += 1)
+				{
+					var or, ir;
+					if(!r)
+					{
+						or = targInR;
+						ir = targCircR;
+					}
+					else
+					{
+						or = targOutR;
+						ir = targInR;
+					}
+					var sang = -Math.PI/8 + s * Math.PI/4;
+					var eang = sang + Math.PI/4;
+					midCx.beginPath();
+					midCx.arc(targCen[0], targCen[1], or, sang, eang);
+					midCx.arc(targCen[0], targCen[1], ir, eang, sang, true);
+					midCx.globalAlpha = .3;
+					midCx.fill();
+					midCx.globalAlpha = 1;
+					midCx.stroke();
+				}
+			} */
+			/* var dist = distance(targPos, targCen);
 			
 			
 			//midCx.strokeText(targCen[0] + ', ' + targCen[1], 2, 10);
@@ -620,7 +711,7 @@ function animate()
 					midCx.globalAlpha = 1;
 					midCx.stroke();
 				}
-			}
+			} */
 			
 			
 			

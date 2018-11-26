@@ -73,10 +73,12 @@ function updateClickM(e)
 {
 	//console.log(e);
 	//ignore defaults if we're not zooming
-	//if(act !== ZOOM) e.preventDefault();
+	
 	
 	//get the position
 	var XY = getXY(e);
+	
+	if(act !== ZOOM && XY[2] === MOVE) e.preventDefault();
 	
 	//check for new event
 	if(XY[2] === DOWN)
@@ -89,7 +91,7 @@ function updateClickM(e)
 			console.log('but');
 
 			//check for zoom button
-			if(!butts[Math.floor(XY[0]/butS)].prevent)
+			if(Math.floor(XY[0]/butS) === ZOOM_COL)
 			{
 				console.log('zoom');
 				act = ZOOM;
@@ -506,7 +508,7 @@ function animate()
 	var curW = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
 	var curH = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight);
 	
-	if(act !=== ZOOM && (curL !== screenL || curT !== screenT || curW !== screenW || curH !== screenH))
+	if(act !== ZOOM && (curL !== screenL || curT !== screenT || curW !== screenW || curH !== screenH))
 	{
 		console.log('change');
 		reConfigure();

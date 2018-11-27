@@ -21,7 +21,7 @@
 const DOWN = 0;
 const MOVE = 1;
 const UP = 2;
-
+var fullS = false;
 //const BUTTON = -1;
 const outGap = 7;
 const inGap = 5;
@@ -79,7 +79,8 @@ function updateClickM(e)
 {
 	//console.log(e);
 	//ignore defaults if we're not zooming
-	if(e.type.indexOf('move') > -1 && act !== ZOOM) e.preventDefault();
+	//if(e.type.indexOf('move') > -1 && act !== ZOOM) 
+		e.preventDefault();
 	
 	//get the position
 	var XY = getXY(e);
@@ -117,7 +118,30 @@ function updateClickM(e)
 	//check for event end, apply whatever is necessary
 	if(XY[2] === UP)
 	{		
-		if(!act === ZOOM && curRow !== null && curCol !== null)
+		if(act === ZOOM)
+		{
+			fullS = !fullS;
+			var elem = document.documentElement;
+
+			/* View in fullscreen */
+			if(fullS)
+			{
+			  if (elem.requestFullscreen) elem.requestFullscreen();
+			  else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen();
+			  else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+			  else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+			}
+			else
+			{
+				if (document.exitFullscreen) document.exitFullscreen();
+				else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+				else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+				else if (document.msExitFullscreen)  document.msExitFullscreen();
+			}
+		}
+			
+		
+		else if(!act === ZOOM && curRow !== null && curCol !== null)
 		{
 			if(act === TARGET)
 			{
@@ -278,6 +302,9 @@ function getXY(e)
 			case 'mousemove': type = MOVE; break;
 			case 'mouseup': type = UP; break;	
 		}
+		
+		
+		
 		x = event.clientX;
 		y = event.clientY;
 		
@@ -605,7 +632,7 @@ function animate()
 			var yVal = ((Math.abs(sin) > .7)? scl: 0) * ySgn;
 			midCx.fillStyle = 'RGB(255,255,255)';
 			midCx.fillRect(startMin + (pos[0] + xVal) * (boxS + inGap), startMaj + (pos[1] + yVal) * (boxS + inGap), boxS, boxS);
-			/*
+			
 			midCx.fillStyle = 'RGB(25,124,247)';
 			midCx.beginPath();
 			midCx.arc(targCen[0], targCen[1], oR, sAng, eAng);
@@ -642,8 +669,8 @@ function animate()
 					midCx.globalAlpha = 1;
 					midCx.stroke();
 				}
-			} */
-			/* var dist = distance(targPos, targCen);
+			}
+			var dist = distance(targPos, targCen);
 			
 			
 			//midCx.strokeText(targCen[0] + ', ' + targCen[1], 2, 10);
@@ -711,7 +738,7 @@ function animate()
 					midCx.globalAlpha = 1;
 					midCx.stroke();
 				}
-			} */
+			}
 			
 			
 			

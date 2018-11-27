@@ -79,8 +79,7 @@ function updateClickM(e)
 {
 	//console.log(e);
 	//ignore defaults if we're not zooming
-	//if(e.type.indexOf('move') > -1 && act !== ZOOM) 
-		e.preventDefault();
+	if(e.type.indexOf('move') > -1 && act !== ZOOM) e.preventDefault();
 	
 	//get the position
 	var XY = getXY(e);

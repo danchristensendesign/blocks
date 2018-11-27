@@ -172,14 +172,20 @@ function updateClickM(e)
 			curRow = null;
 			curCol = null;
 			
-			if(act === BUTTON && XY[1] >= sMaj - butS)
+			if(act === BUTTON)
 			{
-				curRow = BUTTON;
-				curCol = Math.floor(XY[0]/butS);
-				if(curCol === ZOOM_COL)
+				
+				if(XY[1] >= (sMaj - butS))
 				{
-					console.log('bad zoom');
-					curCol = null;
+					
+					curRow = BUTTON;
+					curCol = Math.floor(XY[0]/butS);
+					console.log(curRow + ', ' + curCol + act);//XY[1] + ', poop ' + (sMaj - butS));
+					if(curCol === ZOOM_COL)
+					{
+						console.log('bad zoom');
+						curCol = null;
+					}
 				}
 			}
 			else if(act === TARGET)
@@ -304,8 +310,8 @@ function getXY(e)
 		
 		
 		
-		x = event.clientX;
-		y = event.clientY;
+		x = e.clientX;
+		y = e.clientY;
 		
 	}
 	else
@@ -316,7 +322,7 @@ function getXY(e)
 			case 'touchmove': type = MOVE; break;
 			case 'touchend': return [0, 0, UP]; break;
 		}
-		/* x = e.touches[0].pageX - screenL;
+		/*x = e.touches[0].pageX - screenL;
 		y = e.touches[0].pageY - screenT; */
 		x = e.touches[0].clientX;
 		y = e.touches[0].clientY;
@@ -564,14 +570,17 @@ function animate()
 	}
 	
 	midCx.clearRect(0,0,sMin, sMaj);
-	
+	midCx.fillStyle = 'RGB(25,124,247)';
 	if(act !== null)
 	{
 		midCxfont="30px";
 		
-		if(curRow === BUTTON && curCol !== null)
+		if(act === BUTTON)
 		{
-			midCx.fillRect(curCol * butS, sMaj - butS, butS, butS);
+			if(curRow === BUTTON && curCol !== null)
+			{
+				midCx.fillRect(curCol * butS, sMaj - butS, butS, butS);
+			}
 		}
 		else
 		{

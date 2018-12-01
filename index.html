@@ -588,7 +588,8 @@ function animate()
 		}
 		else
 		{
-			const targCircT = boxS/2;
+			const targCircT = 40;//(!mobile)? boxS/2: boxS/2*3;
+			console.log(targCircT);
 			const targInT = targCircT * 1.5;// + boxS;
 			const targOutT = targCircT * 2;//;
 			const adder = targCircT * .2;

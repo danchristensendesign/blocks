@@ -588,10 +588,10 @@ function animate()
 		}
 		else
 		{
-			const targCircT = 35;//(!mobile)? boxS/2: boxS/2*3;
+			const targCircT = 27;//(!mobile)? boxS/2: boxS/2*3;
 			console.log(targCircT);
-			const targInT = targCircT * 2;// + boxS;
-			const targOutT = targCircT * 2.7;//;
+			const targInT = targCircT + 30;// + boxS;
+			const targOutT = targInT + 20;// 2.7;//;
 			const adder = targCircT * .3;
 			const liner = adder * .3;
 			const overAng = Math.PI/12;

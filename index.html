@@ -17,7 +17,7 @@
 
 <script>
 
-
+var mobile = true;
 const DOWN = 0;
 const MOVE = 1;
 const UP = 2;
@@ -33,8 +33,10 @@ var screenW;
 var screenH;
 var sMaj;
 var sMin;
+var butS; 
+var boxS;
 var flipped;
-const scrollAmt = 150;
+var scrollAmt = 150;
 var mainDiv = document.getElementById("canvDiv");
 mainDiv.style.left = 0 + 'px';
 mainDiv.style.top = 0 + 'px';
@@ -301,6 +303,7 @@ function getXY(e)
 	
 	if(e.type.substr(0, 5) === 'mouse') 
 	{
+		mobile = false;
 		switch(e.type)
 		{
 			case 'mousedown': type = DOWN; break;
@@ -408,6 +411,7 @@ function getXY(e)
 } */
 function reConfigure()
 {
+	if(!mobile) scrollAmt = 0;
 	screenT = (window.pageYOffset || document.documentElement.scrollTop);
 	window.scrollTo(0, (screenT)? scrollAmt: 0);
 	
@@ -585,13 +589,15 @@ function animate()
 		else
 		{
 			const targCircT = boxS/2;
-			const targInT = targCircT + boxS;
-			const targOutT = targInT + boxS;
-			
-			
+			const targInT = targCircT * 1.5;// + boxS;
+			const targOutT = targCircT * 2;//;
+			const adder = targCircT * .2;
+			const liner = adder * .3;
+			const overAng = Math.PI/12;
+			const underAng = Math.PI/20 * .5;
 			midCx.fillStyle = 'RGB(25,124,247)';
 			midCx.fillRect(startMin + pos[1] * (boxS + inGap), startMaj + pos[0] * (boxS + inGap), boxS, boxS);
-			for(var s = 0; s < 8; s+= 1)
+			/* for(var s = 0; s < 8; s+= 1)
 			{
 				for(var r = 1; r < 3; r += 1)
 				{
@@ -603,7 +609,7 @@ function animate()
 					var yVal = ((Math.abs(sin) > .7)? r: 0) * ySgn;
 					midCx.fillRect(startMin + (pos[0] + xVal) * (boxS + inGap), startMaj + (pos[1] + yVal) * (boxS + inGap), boxS, boxS);
 				}
-			}
+			} */
 			
 					
 					
@@ -648,10 +654,11 @@ function animate()
 			midCx.fill();
 			
 			midCx.beginPath();
-			midCx.arc(targCen[0], targCen[1], targCircR, 0, 2 * Math.PI);
+			midCx.arc(targCen[0], targCen[1], targCircT, 0, 2 * Math.PI);
 			midCx.stroke();
 			midCx.lineWidth = 3;
 			midCx.fillStyle = 'RGB(255,255,255)';
+			midCx.fillStyle = 'RGB(75,180,247)';
 			for(var s = 0; s < 8; s+= 1)
 			{
 				for(var r = 0; r < 2; r += 1)
@@ -659,23 +666,25 @@ function animate()
 					var or, ir;
 					if(!r)
 					{
-						or = targInR;
-						ir = targCircR;
+						or = targInT - liner;
+						ir = targCircT + liner;
+						midCx.fillStyle = 'RGB(120, 120, 120)';
 					}
 					else
 					{
-						or = targOutR;
-						ir = targInR;
+						or = targOutT - liner;
+						ir = targInT + liner;
+						midCx.fillStyle = 'RGB(201, 201, 201)';
 					}
-					var sang = -Math.PI/8 + s * Math.PI/4;
-					var eang = sang + Math.PI/4;
+					var sang = -Math.PI/8 + s * Math.PI/4 + underAng;
+					var eang = sang + Math.PI/4 - underAng;
 					midCx.beginPath();
 					midCx.arc(targCen[0], targCen[1], or, sang, eang);
 					midCx.arc(targCen[0], targCen[1], ir, eang, sang, true);
-					midCx.globalAlpha = .3;
+					midCx.globalAlpha = .7;
 					midCx.fill();
-					midCx.globalAlpha = 1;
-					midCx.stroke();
+					/* midCx.globalAlpha = 1;
+					midCx.stroke(); */
 				}
 			}
 			var dist = distance(targPos, targCen);
@@ -689,39 +698,47 @@ function animate()
 			if(theta < 0) theta += Math.PI * 2;
 			theta += Math.PI/8;
 			var sect = Math.floor(theta/(Math.PI/4))%8;
-			var sAng = -Math.PI/8 + sect * Math.PI/4;
-			var eAng = sAng + Math.PI/4;
+			var sAng = -Math.PI/8 + sect * Math.PI/4 - overAng;
+			var eAng = sAng + Math.PI/4 + 2* overAng;
 			var oR = 0;
 			var iR = 0
 			if(dist < targCircT)
 			{
 				sAng = 0;
 				eAng = 2 * Math.PI;
-				oR = targCircR;
+				oR = targCircT;
 				iR = 0;
 			}
 			else if(dist < targInT)
 			{
-				oR = targInR;
-				iR = targCircR;	
+				
+				oR = targInT + adder;// * 1.1;
+				iR = targCircT - adder;//* .9;	
 			}
 			else if(dist < targOutT) 
 			{
-				oR = targOutR;
-				iR = targInR;
+				oR = targOutT  + adder;//* 1.1;
+				iR = targInT - adder;//* .9;
 			}
+			midCx.fillStyle = 'RGB(255,255,255)';
+			midCx.globalAlpha = .7;//'RGB(255,255,255)';
+			midCx.beginPath();
+			midCx.arc(targCen[0], targCen[1], targCircT-liner, 0, 2 * Math.PI);
+			midCx.fill();
+			midCx.fillStyle = 'black';
+			midCx.globalAlpha = 1;
+			midCx.stroke();
+			midCx.lineWidth = 3;
+			midCx.fillStyle = 'RGB(255,255,255)';
+			
 			midCx.fillStyle = 'RGB(25,124,247)';
 			midCx.beginPath();
 			midCx.arc(targCen[0], targCen[1], oR, sAng, eAng);
 			midCx.arc(targCen[0], targCen[1], iR, eAng, sAng, true);
 			midCx.fill();
 			
-			midCx.beginPath();
-			midCx.arc(targCen[0], targCen[1], targCircR, 0, 2 * Math.PI);
-			midCx.stroke();
-			midCx.lineWidth = 3;
-			midCx.fillStyle = 'RGB(255,255,255)';
-			for(var s = 0; s < 8; s+= 1)
+			
+			/* for(var s = 0; s < 8; s+= 1)
 			{
 				for(var r = 0; r < 2; r += 1)
 				{
@@ -746,7 +763,7 @@ function animate()
 					midCx.globalAlpha = 1;
 					midCx.stroke();
 				}
-			}
+			} */
 			
 			
 			

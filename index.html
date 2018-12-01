@@ -588,11 +588,11 @@ function animate()
 		}
 		else
 		{
-			const targCircT = 40;//(!mobile)? boxS/2: boxS/2*3;
+			const targCircT = 35;//(!mobile)? boxS/2: boxS/2*3;
 			console.log(targCircT);
-			const targInT = targCircT * 1.5;// + boxS;
-			const targOutT = targCircT * 2;//;
-			const adder = targCircT * .2;
+			const targInT = targCircT * 2;// + boxS;
+			const targOutT = targCircT * 2.7;//;
+			const adder = targCircT * .3;
 			const liner = adder * .3;
 			const overAng = Math.PI/12;
 			const underAng = Math.PI/20 * .5;
@@ -699,8 +699,8 @@ function animate()
 			if(theta < 0) theta += Math.PI * 2;
 			theta += Math.PI/8;
 			var sect = Math.floor(theta/(Math.PI/4))%8;
-			var sAng = -Math.PI/8 + sect * Math.PI/4 - overAng;
-			var eAng = sAng + Math.PI/4 + 2* overAng;
+			var sAng = -Math.PI/8 + sect * Math.PI/4 ;
+			var eAng = sAng + Math.PI/4 ;
 			var oR = 0;
 			var iR = 0
 			if(dist < targCircT)
@@ -712,14 +712,20 @@ function animate()
 			}
 			else if(dist < targInT)
 			{
-				
+				var ot = overAng * 3/2;
+				sAng -= ot;
+				eAng += ot; 
 				oR = targInT + adder;// * 1.1;
 				iR = targCircT - adder;//* .9;	
 			}
 			else if(dist < targOutT) 
 			{
+				var ot = overAng;
+				sAng -= ot;
+				eAng +=  ot; 
 				oR = targOutT  + adder;//* 1.1;
 				iR = targInT - adder;//* .9;
+
 			}
 			midCx.fillStyle = 'RGB(255,255,255)';
 			midCx.globalAlpha = .7;//'RGB(255,255,255)';

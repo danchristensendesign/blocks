@@ -7,66 +7,79 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
-<div id="canvDiv" class="unselectable" style="position:absolute;">
-	<canvas id="backCanv" style="position: absolute; left: 0; top: 0; z-index: 0;"></canvas>
-	<canvas id="midCanv" style="position: absolute; left: 0; top: 0; z-index: 1;"></canvas>
-	<canvas id="frontCanv" oncontextmenu="return false;" style="position: absolute; left: 0; top: 0; z-index: 2;"></canvas>	
+<div id="canvDiv" class="unselectable" style="position:absolute; left: 0, top: 0;">
+
 </div>
 
 
 
 <script>
-
-var mobile = true;
-const DOWN = 0;
-const MOVE = 1;
-const UP = 2;
-var fullS = false;
-//const BUTTON = -1;
 const outGap = 7;
 const inGap = 5;
+
+const BACK = 0;
+const MID = 1;
+const FRONT = 2;
+
+const CLICK_START = 0;
+const CLICK_MOVE = 1;
+const CLICK_END = 2;
+
+const SELECT_BUT = -1;
+const SELECT_ZOOM = 2; 
+const SELECT_MOVE = 3;
+
+var flipped;
+var mobile = false;
+var fullS = false;
+var scrollAmt = 150;
+var SELECT_ZOOM_COL = 0;
+
+var canv = [];
+var cx = [];
+
 var numX = 6;
 var numY = 11;
-var screenL;
-var screenT;
-var screenW;
-var screenH;
-var sMaj;
-var sMin;
-var butS; 
-var boxS;
-var flipped;
-var scrollAmt = 150;
+
+var scrn = {
+	L: 0,
+	T: 0,
+	W: 0,
+	H: 0,
+	maj: 0,
+	min: 0, 
+	but: 0,
+	box: 0
+}
 var mainDiv = document.getElementById("canvDiv");
 mainDiv.style.left = 0 + 'px';
 mainDiv.style.top = 0 + 'px';
-var backCanv = document.getElementById("backCanv");
-var backCx = backCanv.getContext("2d");
-var midCanv = document.getElementById("midCanv");
-var midCx = midCanv.getContext("2d");
-var frontCanv = document.getElementById("frontCanv");
-var frontCx = frontCanv.getContext("2d");
-midCx.fillStyle = 'RGB(25,124,247)';
-backCx.fillStyle = 'RGB(0,0,0)';
-document.addEventListener("touchstart", updateClickM);
-document.addEventListener("touchend", updateClickM);
-document.addEventListener("touchmove", updateClickM, {passive: false});
 
-document.addEventListener("mousedown", updateClickM);
-document.addEventListener("mousemove", updateClickM);
-document.addEventListener("mouseup", updateClickM);
+/* var canv[BACK] = document.getElementById("canv[BACK]");
+var cx[BACK] = canv[BACK].getContext("2d");
+var canv[MID] = document.getElementById("canv[MID]");
+var cx[MID] = canv[MID].getContext("2d");
+var canv[FRONT] = document.getElementById("canv[FRONT]");
+var cx[FRONT] = canv[FRONT].getContext("2d");
+
+*/
+document.addEventListener("touchstart", startClick);
+document.addEventListener("touchend", endClick);
+document.addEventListener("touchmove", moveClick, {passive: false});
+
+document.addEventListener("mousedown", startClick);
+document.addEventListener("mousemove", moveClick);
+document.addEventListener("mouseup", endClick);
 
 var curRow = null;
 var curCol = null;
 
-const BUTTON = -1;
-const ZOOM = 2; 
-const TARGET = 3;
+
 var act = null;
 /* function updateClick(e)
 {
 	if(e.type === "touchend" || !(e.touches)) act = null;
-	else act = BUTTON; 
+	else act = SELECT_BUT; 
 
 	
 } */
@@ -77,393 +90,224 @@ const targInR = 75;
 const targOutR = 110;
 
 var pos = [2,2];
-function updateClickM(e)
+
+
+
+
+function startClick(e)
 {
-	//console.log(e);
-	//ignore defaults if we're not zooming
-	if(e.type.indexOf('move') > -1 && act !== ZOOM) e.preventDefault();
+	//check for mobile vs computer
+	mobile = e.type.indexOf('touch') > -1;
 	
-	//get the position
+	//set XY
 	var XY = getXY(e);
-
 	
-	
-	//check for new event
-	if(XY[2] === DOWN)
+	//check for button
+	if(XY[1] >= scrn.maj - scrn.but)
 	{
-		console.log('down');
-		//check for button
-		if(XY[1] >= sMaj - butS)
+		//check for zoom button
+		if(Math.floor(XY[0]/scrn.but) === SELECT_ZOOM_COL)
 		{
-			act = BUTTON;
-			console.log('but');
-
-			//check for zoom button
-			if(Math.floor(XY[0]/butS) === ZOOM_COL)
-			{
-				console.log('zoom');
-				act = ZOOM;
-				window.scrollTo(0, 0);
-				reConfigure();
-			}			
-		}
-		//otherwise it's a new target
+			act = SELECT_ZOOM;
+			window.scrollTo(0, 0);
+			reConfigure();
+		}	
 		else
 		{
-			targCen = XY.slice(0, 2);
-			console.log('board');
-			act = TARGET;
+			act = SELECT_BUT;
 		}
 	}
-	
-	//check for event end, apply whatever is necessary
-	if(XY[2] === UP)
-	{		
-		if(act === ZOOM)
-		{
-			fullS = !fullS;
-			var elem = document.documentElement;
-
-			/* View in fullscreen */
-			if(fullS)
-			{
-			  if (elem.requestFullscreen) elem.requestFullscreen();
-			  else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen();
-			  else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
-			  else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
-			}
-			else
-			{
-				if (document.exitFullscreen) document.exitFullscreen();
-				else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
-				else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-				else if (document.msExitFullscreen)  document.msExitFullscreen();
-			}
-		}
-			
-		
-		else if(!act === ZOOM && curRow !== null && curCol !== null)
-		{
-			if(act === TARGET)
-			{
-				
-			}
-			else
-			{
-				
-			}
-		}
-		curRow = null;
-		curCol = null;
-		console.log('up');
-		act = null;
-	}
-	
-	//otherwise, it's a start or move, update where we're at
+	//otherwise it's a new target
 	else
 	{
-		//zoom-- make sure it's highlighted regardless of position
-		if(act === ZOOM)
-		{
-			curRow = BUTTON;
-			curCol = ZOOM_COL;
-		}
-		else
-		{
-			
-			curRow = null;
-			curCol = null;
-			
-			if(act === BUTTON)
-			{
-				
-				if(XY[1] >= (sMaj - butS))
-				{
-					
-					curRow = BUTTON;
-					curCol = Math.floor(XY[0]/butS);
-					console.log(curRow + ', ' + curCol + act);//XY[1] + ', poop ' + (sMaj - butS));
-					if(curCol === ZOOM_COL)
-					{
-						console.log('bad zoom');
-						curCol = null;
-					}
-				}
-			}
-			else if(act === TARGET)
-			{
-				targPos = XY.slice(0, 2);
-				/* var dist = distance(targCen, XY);
-				if(dist < targRin) targRing = 0&& XY[0] > startMin && XY[0] < sMin - startMin && 
-				XY[1] > startMaj && XY[1] < sMaj - butS - startMaj)
-			{
-				curCol = Math.floor((XY[0] - startMin)/(boxS + inGap));
-				curRow = Math.floor((XY[1] - startMaj)/(boxS + inGap));
-				 */
-			}
-		}
+		targCen = XY.slice(0, 2);
+		console.log('board');
+		act = SELECT_MOVE;
 	}
-	//console.log(act);
+	
+	//update target
+	updateClick(XY);	
+	
 }
 
-
-
-
-/* function updateClick(e)
+function moveClick(e)
 {
-	//ignore defaults if we're not zooming
-	//if(act !== ZOOM) e.preventDefault();
-	
-	//get the position
-	var XY = getXY(e);
-	console.log(XY[0] + ', ' + XY[1]);
-	
-	//check for new event
-	if(e.type === "touchstart")
-	{
-		//check for button
-		if(curY >= sMaj - butS)
-		{
-			act = BUTTON;
-
-			//check for zoom button
-			if(!butts[Math.floor(curX/butS)].prevent)
-			{
-				
-				act = ZOOM;
-				window.scrollTo(0, 0);
-				reConfigure();
-			}			
-		}
-		//otherwise it's a new target
-		else
-		{
-			act = TARGET;
-		}
-	}
-	
-	//check for event end, apply whatever is necessary
-	if(e.type === "touchend" || !(e.touches))
-	{		
-		if(!act === ZOOM && curRow !== null && curCol !== null)
-		{
-			if(act === TARGET)
-			{
-				
-			}
-			else
-			{
-				
-			}
-		}
-		curRow = null;
-		curCol = null;
-		act = null;
-	}
-	
-	//otherwise, it's a start or move, update where we're at
-	else
-	{
-		//zoom-- make sure it's highlighted regardless of position
-		if(act === ZOOM)
-		{
-			curRow = BUTTON;
-			curCol = ZOOM_COL;
-		}
-		else
-		{
-			
-			curRow = null;
-			curCol = null;
-			
-			if(act === BUTTON && curY >= sMaj - butS)
-			{
-				curRow = BUTTON;
-				curCol = Math.floor(curX/butS);
-				if(curCol === ZOOM_COL) curCol == null;
-			}
-			else if(act === TARGET && curX > startMin && curX < sMin - startMin && 
-				curY > startMaj && curY < sMaj - butS - startMaj)
-			{
-				curCol = Math.floor((curX - startMin)/(boxS + inGap));
-				curRow = Math.floor((curY - startMaj)/(boxS + inGap));
-				
-			}
-		}
-	}
-} */
-
-
+	//prevent default action if we're not zooming
+	if(act !== SELECT_ZOOM) e.preventDefault();
+	updateClick(getXY(e));
+}
 
 function getXY(e)
 {
-	var x;
-	var y;
-	var type;
+	var XY = [];
 	
-	if(e.type.substr(0, 5) === 'mouse') 
+	if(mobile)
 	{
-		mobile = false;
-		switch(e.type)
-		{
-			case 'mousedown': type = DOWN; break;
-			case 'mousemove': type = MOVE; break;
-			case 'mouseup': type = UP; break;	
-		}
-		
-		
-		
-		x = e.clientX;
-		y = e.clientY;
-		
+		XY[0] = e.touches[e.touches.length -1].clientX;
+		XY[1] = e.touches[e.touches.length -1].clientY;
 	}
 	else
 	{
-		switch(e.type)
-		{
-			case 'touchstart': type = DOWN; break;
-			case 'touchmove': type = MOVE; break;
-			case 'touchend': return [0, 0, UP]; break;
-		}
-		/*x = e.touches[0].pageX - screenL;
-		y = e.touches[0].pageY - screenT; */
-		x = e.touches[0].clientX;
-		y = e.touches[0].clientY;
-		
+		XY[0] = e.clientX;
+		XY[1] = e.clientY;
 	}
-	
+		
+		
 	if(flipped) 
 	{
-		return [sMin - y, x, type];
+		var t = XY[0];
+		XY[0] = scrn.min - XY[1];
+		XY[1] = t;
 	}
-	else
-	{
-		return [x, y, type];
-	}
+	return XY;
+}
 	
-	/* if(flipped) 
+function updateClick(XY)
+{
+
+
+	//update positions
+	if(act === SELECT_ZOOM)
 	{
-		return [sMin - (y - screenT), x - screenL, type];
+		curRow = SELECT_BUT;
+		curCol = SELECT_ZOOM_COL;
 	}
 	else
 	{
-		return [x - screenL, y - screenT, type];
-	} */
+		
+		curRow = null;
+		curCol = null;
+		
+		if(act === SELECT_BUT)
+		{
+			if(XY[1] >= (scrn.maj - scrn.but))
+			{
+				curRow = SELECT_BUT;
+				curCol = Math.floor(XY[0]/scrn.but);
+				console.log(curRow + ', ' + curCol + act);//XY[1] + ', poop ' + (scrn.maj - scrn.but));
+				if(curCol === SELECT_ZOOM_COL)
+				{
+					curCol = null;
+				}
+			}
+		}
+		else if(act === SELECT_MOVE)
+		{
+			targPos = XY.slice(0, 2);
+		}
+	}
 }
 
 
-/* function updateClick(e)
+function endClick(e)
 {
-	if(e.type === "touchend" || !(e.touches))
+	//zoom
+	if(act === SELECT_ZOOM)
 	{
-		toggling = false;
-		
-		//do action if applicable
-		if(curRow !== null && curCol !== null)
+		fullS = !fullS;
+		var elem = document.documentElement;
+
+		//toggle fullscreen (doesn't work on all platforms) 
+		if(fullS)
 		{
-			
-		}
-		curRow = null;
-		curCol = null;
-	}
-	else
-	{
-		curRow = null;
-		curCol = null;
-		var curX, curY;
-		
-		if(flipped) 
-		{
-			curX = sMin - (e.touches[0].pageY - screenT);
-			curY = e.touches[0].pageX - screenL;
+		  if (elem.requestFullscreen) elem.requestFullscreen();
+		  else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen();
+		  else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+		  else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
 		}
 		else
 		{
-			curX = e.touches[0].pageX - screenL;
-			curY = e.touches[0].pageY - screenT;
+			if (document.exitFullscreen) document.exitFullscreen();
+			else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+			else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+			else if (document.msExitFullscreen)  document.msExitFullscreen();
 		}
-		
-		//on button target
-		if(curY >= sMaj - butS)
+	}
+	else if(curRow !== null && curCol !== null)
+	{
+		//make a move
+		if(act === SELECT_MOVE)
 		{
-			curRow = BUTTON;
-			if(butS) curCol = Math.floor(curX/butS);
-			
-			if(e.type === "touchstart" && !butts[curCol].prevent)
-			{
-				toggling = true;
-				window.scrollTo(0, 0);
-				reConfigure();
-			}
 			
 		}
-	
-		//on grid target
-		else if(curX > startMin && curX < sMin - startMin && 
-				curY > startMaj && curY < sMaj - butS - startMaj)
+		//button clicks
+		else 
 		{
-			curCol = Math.floor((curX - startMin)/(boxS + inGap));
-			curRow = Math.floor((curY - startMaj)/(boxS + inGap));
 			
 		}
 	}
-	if(!toggling) e.preventDefault();
-} */
+	
+	//reset place holders/action status
+	curRow = null;
+	curCol = null;
+	act = null;
+		return;
+}
+
+
+
+
+
+
+
+
+
+
 function reConfigure()
 {
 	if(!mobile) scrollAmt = 0;
-	screenT = (window.pageYOffset || document.documentElement.scrollTop);
-	window.scrollTo(0, (screenT)? scrollAmt: 0);
+	scrn.T = (window.pageYOffset || document.documentElement.scrollTop);
+	window.scrollTo(0, (scrn.T)? scrollAmt: 0);
 	
-	screenT = (window.pageYOffset || document.documentElement.scrollTop);
-	screenL = (window.pageXOffset || document.documentElement.scrollLeft);
+	scrn.T = (window.pageYOffset || document.documentElement.scrollTop);
+	scrn.l = (window.pageXOffset || document.documentElement.scrollLeft);
 	
-	screenW = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
-	screenH = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight);
-	backCanv.width = screenW + scrollAmt;
-	backCanv.height = screenH +  scrollAmt;
-	midCanv.width = screenW + scrollAmt;
-	midCanv.height = screenH + scrollAmt;
-	frontCanv.width = screenW + scrollAmt;
-	frontCanv.height = screenH + scrollAmt;
-	backCx.restore();
-	midCx.restore();
-	frontCx.restore();
-	backCx.save();
-	midCx.save();
-	frontCx.save();
-	sMaj = Math.max(screenW, screenH);
-	sMin = Math.min(screenW, screenH);
-	flipped = (screenW > screenH);
+	scrn.w = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
+	scrn.h = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight);
+	canv[BACK].width = scrn.w + scrollAmt;
+	canv[BACK].height = scrn.h +  scrollAmt;
+	canv[MID].width = scrn.w + scrollAmt;
+	canv[MID].height = scrn.h + scrollAmt;
+	canv[FRONT].width = scrn.w + scrollAmt;
+	canv[FRONT].height = scrn.h + scrollAmt;
+	cx[BACK].restore();
+	cx[MID].restore();
+	cx[FRONT].restore();
+	cx[BACK].save();
+	cx[MID].save();
+	cx[FRONT].save();
+	scrn.maj = Math.max(scrn.w, scrn.h);
+	scrn.min = Math.min(scrn.w, scrn.h);
+	flipped = (scrn.w > scrn.h);
 	
-	butS = sMin / butts.length;
-	boxS = Math.min((sMaj - butS - 2 * outGap - (numY-1) * inGap)/numY, 
-					(sMin - 2 * outGap - (numX-1) * inGap)/numX);
+	scrn.but = scrn.min / butts.length;
+	scrn.sq = Math.min((scrn.maj - scrn.but - 2 * outGap - (numY-1) * inGap)/numY, 
+					(scrn.min - 2 * outGap - (numX-1) * inGap)/numX);
 					
-	startMin = (sMin - boxS * numX - (numX - 1) * inGap)/2;
-	startMaj = (sMaj - butS - boxS * numY - (numY -1) * inGap)/2;
+	startMin = (scrn.min - scrn.sq * numX - (numX - 1) * inGap)/2;
+	startMaj = (scrn.maj - scrn.but - scrn.sq * numY - (numY -1) * inGap)/2;
 	
 	drawBase();
 }
 	
 function drawBase()
 {
-	backCx.clearRect(0, 0, backCanv.width, backCanv.height);
-	frontCx.clearRect(0, 0, backCanv.width, backCanv.height);
+	cx[BACK].clearRect(0, 0, canv[BACK].width, canv[BACK].height);
+	cx[FRONT].clearRect(0, 0, canv[BACK].width, canv[BACK].height);
 	
-	backCx.translate(0, screenT);
-	frontCx.translate(0, screenT);
-	midCx.translate(0, screenT);
+	cx[BACK].translate(0, scrn.T);
+	cx[FRONT].translate(0, scrn.T);
+	cx[MID].translate(0, scrn.T);
 	
-	midCx.fillStyle = 'RGB(25,124,247)';
+	cx[MID].fillStyle = 'RGB(25,124,247)';
 	
 	if(flipped)
 	{
-		backCx.rotate(-Math.PI/2);
-		backCx.translate(-sMin, 0);
+		cx[BACK].rotate(-Math.PI/2);
+		cx[BACK].translate(-scrn.min, 0);
 		
-		midCx.rotate(-Math.PI/2);
-		midCx.translate(-sMin, 0);
+		cx[MID].rotate(-Math.PI/2);
+		cx[MID].translate(-scrn.min, 0);
 		
 	}
 	for(var i = 0; i < butts.length; i += 1)
@@ -472,13 +316,13 @@ function drawBase()
 		
 		if(!flipped)
 		{
-			frontCx.drawImage(butImg, butts[i].imgInd * butImg.height, 0, butImg.height, butImg.height,
-				butS * i, sMaj - butS, butS, butS);
+			cx[FRONT].drawImage(butImg, butts[i].imgInd * butImg.height, 0, butImg.height, butImg.height,
+				scrn.but * i, scrn.maj - scrn.but, scrn.but, scrn.but);
 		}
 		else
 		{
-			frontCx.drawImage(butImg, butts[i].imgInd * butImg.height, 0, butImg.height, butImg.height,
-						 sMaj - butS, sMin - butS * (i + 1), butS, butS);
+			cx[FRONT].drawImage(butImg, butts[i].imgInd * butImg.height, 0, butImg.height, butImg.height,
+						 scrn.maj - scrn.but, scrn.min - scrn.but * (i + 1), scrn.but, scrn.but);
 		}
 	}
 	
@@ -487,7 +331,7 @@ function drawBase()
 	{
 		for(var j = 0; j < numY; j += 1)
 		{
-			backCx.fillRect(startMin + i * (boxS + inGap), startMaj + j * (boxS + inGap), boxS, boxS);
+			cx[BACK].fillRect(startMin + i * (scrn.sq + inGap), startMaj + j * (scrn.sq + inGap), scrn.sq, scrn.sq);
 		}
 	}
 	
@@ -496,65 +340,9 @@ function drawBase()
 	
 }
 var minR = 30;
-var cX = sMin/2;
-var cY = sMaj/2;
-function drawPicker()
-{
-	backCx.fillStyle = 'RGB(100,100,100)';
-	backCx.strokeStyle = 'RGB(100, 100, 100)';
-	backCx.beginPath();
-	
-	cX = sMin/2;
-	cY = sMaj/2;
-	var gap = 3;
-	var halfGap = gap/2;
-	
-	//backCx.globalAlpha = .8;
-	backCx.fillStyle = 'RGB(200,200,200)';
-	backCx.strokeStyle = 'RGB(0,0,0)';
-	backCx.lineWidth = gap;
-	backCx.arc(cX, cY, minR * 3, 0, 2 * Math.PI);
-	backCx.fill();
-	backCx.stroke();
-	backCx.beginPath();
-	backCx.arc(cX, cY, minR * 2, 0, 2 * Math.PI);
-	backCx.stroke();
-	
-	for(var grp = 0; grp < 2; grp+= 1)
-	{
-		var outR;
-		var inR;
-		
-		if(!grp)
-		{
-			outR = 2 * minR - halfGap;
-			inR = minR + halfGap;
-		}
-		else
-		{
-			outR = 3 * minR - gap;
-			inR = 2 * minR + halfGap;
-		}
-		var theta = Math.PI/8;
-		var thetaInc = Math.PI/4;
-		
-		for(var slice = 0; slice < 4; slice+=1 )
-		{
-			theta += thetaInc;
-			var dX = 3 * minR * Math.cos(theta);
-			var dY = 3 * minR * Math.sin(theta);
-			backCx.beginPath();
-			backCx.moveTo(cX + dX, cY - dY);
-			backCx.lineTo(cX - dX, cY + dY);
-			backCx.stroke();
-		}
-	}
-	
-	backCx.beginPath();
-	backCx.arc(cX, cY, minR, 0, 2 * Math.PI);
-	backCx.fill();
-	backCx.stroke();
-}
+var cX = scrn.min/2;
+var cY = scrn.maj/2;
+
 
 var k = 0;
 
@@ -567,285 +355,504 @@ function animate()
 	var curW = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
 	var curH = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight);
 	
-	if(act !== ZOOM && (curL !== screenL || curT !== screenT || curW !== screenW || curH !== screenH))
+	if(act !== SELECT_ZOOM && (curL !== scrn.l || curT !== scrn.T || curW !== scrn.w || curH !== scrn.h))
 	{
 		console.log('change');
 		reConfigure();
 	}
 	
-	midCx.clearRect(0,0,sMin, sMaj);
-	midCx.fillStyle = 'RGB(25,124,247)';
+	cx[MID].clearRect(0,0,scrn.min, scrn.maj);
+	cx[MID].fillStyle = 'RGB(25,124,247)';
 	if(act !== null)
 	{
 		midCxfont="30px";
 		
-		if(act === BUTTON || act === ZOOM)
+		if(act === SELECT_BUT || act === SELECT_ZOOM)
 		{
-			if(curRow === BUTTON && curCol !== null)
+			if(curRow === SELECT_BUT && curCol !== null)
 			{
-				midCx.fillRect(curCol * butS, sMaj - butS, butS, butS);
+				cx[MID].fillRect(curCol * scrn.but, scrn.maj - scrn.but, scrn.but, scrn.but);
 			}
 		}
 		else
 		{
-			const targCircT = 30;//(!mobile)? boxS/2: boxS/2*3;
-			console.log(targCircT);
-			const targInT = targCircT + 30;// + boxS;
-			const targOutT = targInT + 20;// 2.7;//;
-			const adder = targCircT * .3;
-			const liner = adder * .3;
-			const overAng = Math.PI/12;
-			const underAng = Math.PI/20 * .5;
-			
-			/* for(var s = 0; s < 8; s+= 1)
+			drawTarget();
+			if(0 === 1)
 			{
-				for(var r = 1; r < 3; r += 1)
+				
+				
+				const targCircT = 30;//(!mobile)? scrn.sq/2: scrn.sq/2*3;
+				console.log(targCircT);
+				const targInT = targCircT + 30;// + scrn.sq;
+				const targOutT = targInT + 20;// 2.7;//;
+				const adder = targCircT * .3;
+				const liner = adder * .3;
+				const overAng = Math.PI/12;
+				const underAng = Math.PI/20 * .5;
+				
+				/* for(var s = 0; s < 8; s+= 1)
 				{
-					var cos = Math.cos(s * Math.PI/4);
-					var xSgn = (cos > 0)? 1: -1;
-					var xVal = ((Math.abs(cos) > .7)? r: 0) * xSgn;
-					var sin = Math.sin(s * Math.PI/4);
-					var ySgn = (sin > 0)? 1: -1;
-					var yVal = ((Math.abs(sin) > .7)? r: 0) * ySgn;
-					midCx.fillRect(startMin + (pos[0] + xVal) * (boxS + inGap), startMaj + (pos[1] + yVal) * (boxS + inGap), boxS, boxS);
-				}
-			} */
-			
-					
-					
-			var dist = distance(targPos, targCen);
-			var rC = boxS/2;
-			var ri = rC + boxS;
-			var ro = ri + boxS;
-			var theta = Math.atan2(targPos[1]-targCen[1], targPos[0]-targCen[0]);
-			if(theta < 0) theta += Math.PI * 2;
-			theta += Math.PI/8;
-			var sect = Math.floor(theta/(Math.PI/4))%8;
-			var sAng = -Math.PI/8 + sect * Math.PI/4;
-			var eAng = sAng + Math.PI/4;
-			var oR = 0;
-			var iR = 0
-			var scl;
-			if(dist < targCircT)
-			{
-				scl = 0;
-			}
-			else if(dist < targInT)
-			{
-				scl = 1;	
-			}
-			else if(dist < targOutT) 
-			{
-				scl = 2;
-			}
-			var cos = Math.cos(sect * Math.PI/4);
-			var xSgn = (cos > 0)? 1: -1;
-			var xVal = ((Math.abs(cos) > .7)? scl: 0) * xSgn;
-			var sin = Math.sin(sect * Math.PI/4);
-			var ySgn = (sin > 0)? 1: -1;
-			var yVal = ((Math.abs(sin) > .7)? scl: 0) * ySgn;
-			midCx.fillStyle = 'RGB(255,255,255)';
-			midCx.fillRect(startMin + (pos[0] + xVal) * (boxS + inGap), startMaj + (pos[1] + yVal) * (boxS + inGap), boxS, boxS);
-			
-			midCx.fillStyle = 'RGB(25,124,247)';
-			midCx.beginPath();
-			midCx.arc(targCen[0], targCen[1], oR, sAng, eAng);
-			midCx.arc(targCen[0], targCen[1], iR, eAng, sAng, true);
-			midCx.fill();
-			
-			midCx.beginPath();
-			midCx.arc(targCen[0], targCen[1], targCircT, 0, 2 * Math.PI);
-			midCx.stroke();
-			midCx.lineWidth = 3;
-			midCx.fillStyle = 'RGB(255,255,255)';
-			midCx.fillStyle = 'RGB(75,180,247)';
-			for(var s = 0; s < 8; s+= 1)
-			{
-				for(var r = 0; r < 2; r += 1)
+					for(var r = 1; r < 3; r += 1)
+					{
+						var cos = Math.cos(s * Math.PI/4);
+						var xSgn = (cos > 0)? 1: -1;
+						var xVal = ((Math.abs(cos) > .7)? r: 0) * xSgn;
+						var sin = Math.sin(s * Math.PI/4);
+						var ySgn = (sin > 0)? 1: -1;
+						var yVal = ((Math.abs(sin) > .7)? r: 0) * ySgn;
+						cx[MID].fillRect(startMin + (pos[0] + xVal) * (scrn.sq + inGap), startMaj + (pos[1] + yVal) * (scrn.sq + inGap), scrn.sq, scrn.sq);
+					}
+				} */
+				
+						
+						
+				var dist = distance(targPos, targCen);
+				var rC = scrn.sq/2;
+				var ri = rC + scrn.sq;
+				var ro = ri + scrn.sq;
+				var theta = Math.atan2(targPos[1]-targCen[1], targPos[0]-targCen[0]);
+				if(theta < 0) theta += Math.PI * 2;
+				theta += Math.PI/8;
+				var sect = Math.floor(theta/(Math.PI/4))%8;
+				var sAng = -Math.PI/8 + sect * Math.PI/4;
+				var eAng = sAng + Math.PI/4;
+				var oR = 0;
+				var iR = 0
+				var scl;
+				if(dist < targCircT)
 				{
-					var or, ir;
-					if(!r)
-					{
-						or = targInT - liner;
-						ir = targCircT + liner;
-						midCx.fillStyle = 'RGB(120, 120, 120)';
-					}
-					else
-					{
-						or = targOutT - liner;
-						ir = targInT + liner;
-						midCx.fillStyle = 'RGB(201, 201, 201)';
-					}
-					var sang = -Math.PI/8 + s * Math.PI/4 + underAng;
-					var eang = sang + Math.PI/4 - underAng;
-					midCx.beginPath();
-					midCx.arc(targCen[0], targCen[1], or, sang, eang);
-					midCx.arc(targCen[0], targCen[1], ir, eang, sang, true);
-					midCx.globalAlpha = .7;
-					midCx.fill();
-					/* midCx.globalAlpha = 1;
-					midCx.stroke(); */
+					scl = 0;
 				}
-			}
-			var dist = distance(targPos, targCen);
-			
-			
-			//midCx.strokeText(targCen[0] + ', ' + targCen[1], 2, 10);
-			
-			
-			
-			var theta = Math.atan2(targPos[1]-targCen[1], targPos[0]-targCen[0]);
-			if(theta < 0) theta += Math.PI * 2;
-			theta += Math.PI/8;
-			var sect = Math.floor(theta/(Math.PI/4))%8;
-			var sAng = -Math.PI/8 + sect * Math.PI/4 ;
-			var eAng = sAng + Math.PI/4 ;
-			var oR = 0;
-			var iR = 0
-			if(dist < targCircT)
-			{
-				sAng = 0;
-				eAng = 2 * Math.PI;
-				oR = targCircT;
-				iR = 0;
-			}
-			else if(dist < targInT)
-			{
-				var ot = overAng * 3/2;
-				sAng -= ot;
-				eAng += ot; 
-				oR = targInT + adder;// * 1.1;
-				iR = targCircT - adder;//* .9;	
-			}
-			else if(dist < targOutT) 
-			{
-				var ot = overAng;
-				sAng -= ot;
-				eAng +=  ot; 
-				oR = targOutT  + adder;//* 1.1;
-				iR = targInT - adder;//* .9;
+				else if(dist < targInT)
+				{
+					scl = 1;	
+				}
+				else if(dist < targOutT) 
+				{
+					scl = 2;
+				}
+				var cos = Math.cos(sect * Math.PI/4);
+				var xSgn = (cos > 0)? 1: -1;
+				var xVal = ((Math.abs(cos) > .7)? scl: 0) * xSgn;
+				var sin = Math.sin(sect * Math.PI/4);
+				var ySgn = (sin > 0)? 1: -1;
+				var yVal = ((Math.abs(sin) > .7)? scl: 0) * ySgn;
+				cx[MID].fillStyle = 'RGB(255,255,255)';
+				cx[MID].fillRect(startMin + (pos[0] + xVal) * (scrn.sq + inGap), startMaj + (pos[1] + yVal) * (scrn.sq + inGap), scrn.sq, scrn.sq);
+				
+				cx[MID].fillStyle = 'RGB(25,124,247)';
+				cx[MID].beginPath();
+				cx[MID].arc(targCen[0], targCen[1], oR, sAng, eAng);
+				cx[MID].arc(targCen[0], targCen[1], iR, eAng, sAng, true);
+				cx[MID].fill();
+				
+				cx[MID].beginPath();
+				cx[MID].arc(targCen[0], targCen[1], targCircT, 0, 2 * Math.PI);
+				cx[MID].stroke();
+				cx[MID].lineWidth = 3;
+				cx[MID].fillStyle = 'RGB(255,255,255)';
+				cx[MID].fillStyle = 'RGB(75,180,247)';
+				for(var s = 0; s < 8; s+= 1)
+				{
+					for(var r = 0; r < 2; r += 1)
+					{
+						var or, ir;
+						if(!r)
+						{
+							or = targInT - liner;
+							ir = targCircT + liner;
+							cx[MID].fillStyle = 'RGB(120, 120, 120)';
+						}
+						else
+						{
+							or = targOutT - liner;
+							ir = targInT + liner;
+							cx[MID].fillStyle = 'RGB(201, 201, 201)';
+						}
+						var sang = -Math.PI/8 + s * Math.PI/4 + underAng;
+						var eang = sang + Math.PI/4 - underAng;
+						cx[MID].beginPath();
+						cx[MID].arc(targCen[0], targCen[1], or, sang, eang);
+						cx[MID].arc(targCen[0], targCen[1], ir, eang, sang, true);
+						cx[MID].globalAlpha = .7;
+						cx[MID].fill();
+						/* cx[MID].globalAlpha = 1;
+						cx[MID].stroke(); */
+					}
+				}
+				var dist = distance(targPos, targCen);
+				
+				
+				//cx[MID].strokeText(targCen[0] + ', ' + targCen[1], 2, 10);
+				
+				
+				
+				var theta = Math.atan2(targPos[1]-targCen[1], targPos[0]-targCen[0]);
+				if(theta < 0) theta += Math.PI * 2;
+				theta += Math.PI/8;
+				var sect = Math.floor(theta/(Math.PI/4))%8;
+				var sAng = -Math.PI/8 + sect * Math.PI/4 ;
+				var eAng = sAng + Math.PI/4 ;
+				var oR = 0;
+				var iR = 0
+				if(dist < targCircT)
+				{
+					sAng = 0;
+					eAng = 2 * Math.PI;
+					oR = targCircT;
+					iR = 0;
+				}
+				else if(dist < targInT)
+				{
+					var ot = overAng * 3/2;
+					sAng -= ot;
+					eAng += ot; 
+					oR = targInT + adder;// * 1.1;
+					iR = targCircT - adder;//* .9;	
+				}
+				else if(dist < targOutT) 
+				{
+					var ot = overAng;
+					sAng -= ot;
+					eAng +=  ot; 
+					oR = targOutT  + adder;//* 1.1;
+					iR = targInT - adder;//* .9;
 
-			}
-			midCx.fillStyle = 'RGB(255,255,255)';
-			midCx.globalAlpha = .7;//'RGB(255,255,255)';
-			midCx.beginPath();
-			midCx.arc(targCen[0], targCen[1], targCircT-liner, 0, 2 * Math.PI);
-			midCx.fill();
-			midCx.fillStyle = 'black';
-			midCx.globalAlpha = 1;
-			midCx.stroke();
-			midCx.lineWidth = 3;
-			midCx.fillStyle = 'RGB(255,255,255)';
-			
-			midCx.fillStyle = 'RGB(25,124,247)';
-			midCx.beginPath();
-			midCx.arc(targCen[0], targCen[1], oR, sAng, eAng);
-			midCx.arc(targCen[0], targCen[1], iR, eAng, sAng, true);
-			midCx.fill();
-			
-			
-			/* for(var s = 0; s < 8; s+= 1)
-			{
-				for(var r = 0; r < 2; r += 1)
-				{
-					var or, ir;
-					if(!r)
-					{
-						or = targInR;
-						ir = targCircR;
-					}
-					else
-					{
-						or = targOutR;
-						ir = targInR;
-					}
-					var sang = -Math.PI/8 + s * Math.PI/4;
-					var eang = sang + Math.PI/4;
-					midCx.beginPath();
-					midCx.arc(targCen[0], targCen[1], or, sang, eang);
-					midCx.arc(targCen[0], targCen[1], ir, eang, sang, true);
-					midCx.globalAlpha = .3;
-					midCx.fill();
-					midCx.globalAlpha = 1;
-					midCx.stroke();
 				}
-			} */
-			
-			
-			
-			
-			//midCx.fillRect(startMin + curCol * (boxS + inGap), startMaj + curRow * (boxS + inGap), boxS, boxS);
+				cx[MID].fillStyle = 'RGB(255,255,255)';
+				cx[MID].globalAlpha = .7;//'RGB(255,255,255)';
+				cx[MID].beginPath();
+				cx[MID].arc(targCen[0], targCen[1], targCircT-liner, 0, 2 * Math.PI);
+				cx[MID].fill();
+				cx[MID].fillStyle = 'black';
+				cx[MID].globalAlpha = 1;
+				cx[MID].stroke();
+				cx[MID].lineWidth = 3;
+				cx[MID].fillStyle = 'RGB(255,255,255)';
+				
+				cx[MID].fillStyle = 'RGB(25,124,247)';
+				cx[MID].beginPath();
+				cx[MID].arc(targCen[0], targCen[1], oR, sAng, eAng);
+				cx[MID].arc(targCen[0], targCen[1], iR, eAng, sAng, true);
+				cx[MID].fill();
+				
+				
+				/* for(var s = 0; s < 8; s+= 1)
+				{
+					for(var r = 0; r < 2; r += 1)
+					{
+						var or, ir;
+						if(!r)
+						{
+							or = targInR;
+							ir = targCircR;
+						}
+						else
+						{
+							or = targOutR;
+							ir = targInR;
+						}
+						var sang = -Math.PI/8 + s * Math.PI/4;
+						var eang = sang + Math.PI/4;
+						cx[MID].beginPath();
+						cx[MID].arc(targCen[0], targCen[1], or, sang, eang);
+						cx[MID].arc(targCen[0], targCen[1], ir, eang, sang, true);
+						cx[MID].globalAlpha = .3;
+						cx[MID].fill();
+						cx[MID].globalAlpha = 1;
+						cx[MID].stroke();
+					}
+				} */
+				
+				
+				
+				
+				//cx[MID].fillRect(startMin + curCol * (scrn.sq + inGap), startMaj + curRow * (scrn.sq + inGap), scrn.sq, scrn.sq);
+			}
 		}
 	}
-	midCx.fillStyle = 'RGB(25,124,247)';
-	midCx.fillRect(startMin + pos[1] * (boxS + inGap), startMaj + pos[0] * (boxS + inGap), boxS, boxS);	
-/* 	midCx.clearRect(0,0, sMin, sMaj);
+	cx[MID].fillStyle = 'RGB(25,124,247)';
+	cx[MID].fillRect(startMin + pos[1] * (scrn.sq + inGap), startMaj + pos[0] * (scrn.sq + inGap), scrn.sq, scrn.sq);	
+/* 	cx[MID].clearRect(0,0, scrn.min, scrn.maj);
 	k++;
 	k = k % 5;
 	//console.log(act);
 	var t = (act === null)? 0: 2;
-	midCx.fillStyle = 'rgb(90,90,90)';
-	midCx.fillRect(t * butS, sMaj - butS, butS, butS); */
+	cx[MID].fillStyle = 'rgb(90,90,90)';
+	cx[MID].fillRect(t * scrn.but, scrn.maj - scrn.but, scrn.but, scrn.but); */
 	//console.log(l);
 		
 	requestAnimationFrame(animate);
 }
 
+function drawTarget()
+{
+	const targCircT = 30;//(!mobile)? scrn.sq/2: scrn.sq/2*3;
+	console.log(targCircT);
+	const targInT = targCircT + 30;// + scrn.sq;
+	const targOutT = targInT + 20;// 2.7;//;
+	const adder = targCircT * .3;
+	const liner = adder * .3;
+	const overAng = Math.PI/12;
+	const underAng = Math.PI/20 * .5;
+			
+			
+	var dist = distance(targPos, targCen);
+	var rC = scrn.sq/2;
+	var ri = rC + scrn.sq;
+	var ro = ri + scrn.sq;
+	var theta = Math.atan2(targPos[1]-targCen[1], targPos[0]-targCen[0]);
+	if(theta < 0) theta += Math.PI * 2;
+	theta += Math.PI/8;
+	var sect = Math.floor(theta/(Math.PI/4))%8;
+	var sAng = -Math.PI/8 + sect * Math.PI/4;
+	var eAng = sAng + Math.PI/4;
+	var oR = 0;
+	var iR = 0
+	var scl;
+	if(dist < targCircT)
+	{
+		scl = 0;
+	}
+	else if(dist < targInT)
+	{
+		scl = 1;	
+	}
+	else if(dist < targOutT) 
+	{
+		scl = 2;
+	}
+	var cos = Math.cos(sect * Math.PI/4);
+	var xSgn = (cos > 0)? 1: -1;
+	var xVal = ((Math.abs(cos) > .7)? scl: 0) * xSgn;
+	var sin = Math.sin(sect * Math.PI/4);
+	var ySgn = (sin > 0)? 1: -1;
+	var yVal = ((Math.abs(sin) > .7)? scl: 0) * ySgn;
+	cx[MID].fillStyle = 'RGB(255,255,255)';
+	cx[MID].fillRect(startMin + (pos[0] + xVal) * (scrn.sq + inGap), startMaj + (pos[1] + yVal) * (scrn.sq + inGap), scrn.sq, scrn.sq);
+	dist = Math.min(70, dist);
+	theta -= Math.PI/8;
+	//theta = sect * Math.PI/4;
+	var realPos = [targCen[0] + dist * Math.cos(theta), targCen[1] + dist * Math.sin(theta)];
+	var stem = 40;
+	cx[MID].beginPath();
+	cx[MID].moveTo(targCen[0], targCen[1]);
+	cx[MID].lineTo(realPos[0], realPos[1]);
+	cx[MID].lineWidth = stem;
+	cx[MID].strokeStyle = 'rgb(150,150,150)';
+	cx[MID].stroke();
+	cx[MID].beginPath();
+	cx[MID].fillStyle = 'rgb(150,150,150)';
+	cx[MID].arc(targCen[0], targCen[1], stem/2, 0, 2 * Math.PI);
+	cx[MID].fill();
+	
+	cx[MID].save();
+	
+	cx[MID].translate(realPos[0], realPos[1], targPos[1]);
+	
+	//
+	
+	
+	cx[MID].rotate(theta);// -Math.PI/8);
+	var distort = interpLog(5, dist + 5, 75, 1, .5);
+	cx[MID].scale(distort, 1);
+	
+	cx[MID].beginPath();
+	cx[MID].fillStyle = 'rgb(150,150,150)';
+	cx[MID].arc(0, 0, 70, 0, 2 * Math.PI);
+	cx[MID].fill();
+	cx[MID].restore();
+	cx[MID].lineWidth = 10;
+	cx[MID].strokeStyle = 'rgb(50,50,50)';
+	cx[MID].stroke();
+	
+	//portal target
+	/* cx[MID].fillStyle = 'RGB(25,124,247)';
+	cx[MID].beginPath();
+	cx[MID].arc(targCen[0], targCen[1], oR, sAng, eAng);
+	cx[MID].arc(targCen[0], targCen[1], iR, eAng, sAng, true);
+	cx[MID].fill();
+	
+	cx[MID].beginPath();
+	cx[MID].arc(targCen[0], targCen[1], targCircT, 0, 2 * Math.PI);
+	cx[MID].stroke();
+	cx[MID].lineWidth = 3;
+	cx[MID].fillStyle = 'RGB(255,255,255)';
+	cx[MID].fillStyle = 'RGB(75,180,247)';
+	for(var s = 0; s < 8; s+= 1)
+	{
+		for(var r = 0; r < 2; r += 1)
+		{
+			var or, ir;
+			if(!r)
+			{
+				or = targInT - liner;
+				ir = targCircT + liner;
+				cx[MID].fillStyle = 'RGB(120, 120, 120)';
+			}
+			else
+			{
+				or = targOutT - liner;
+				ir = targInT + liner;
+				cx[MID].fillStyle = 'RGB(201, 201, 201)';
+			}
+			var sang = -Math.PI/8 + s * Math.PI/4 + underAng;
+			var eang = sang + Math.PI/4 - underAng;
+			cx[MID].beginPath();
+			cx[MID].arc(targCen[0], targCen[1], or, sang, eang);
+			cx[MID].arc(targCen[0], targCen[1], ir, eang, sang, true);
+			cx[MID].globalAlpha = .7;
+			cx[MID].fill();
+
+		}
+	}
+	var dist = distance(targPos, targCen);
+	
+	
+	//cx[MID].strokeText(targCen[0] + ', ' + targCen[1], 2, 10);
+	
+	
+	
+	var theta = Math.atan2(targPos[1]-targCen[1], targPos[0]-targCen[0]);
+	if(theta < 0) theta += Math.PI * 2;
+	theta += Math.PI/8;
+	var sect = Math.floor(theta/(Math.PI/4))%8;
+	var sAng = -Math.PI/8 + sect * Math.PI/4 ;
+	var eAng = sAng + Math.PI/4 ;
+	var oR = 0;
+	var iR = 0
+	if(dist < targCircT)
+	{
+		sAng = 0;
+		eAng = 2 * Math.PI;
+		oR = targCircT;
+		iR = 0;
+	}
+	else if(dist < targInT)
+	{
+		var ot = overAng * 3/2;
+		sAng -= ot;
+		eAng += ot; 
+		oR = targInT + adder;// * 1.1;
+		iR = targCircT - adder;//* .9;	
+	}
+	else if(dist < targOutT) 
+	{
+		var ot = overAng;
+		sAng -= ot;
+		eAng +=  ot; 
+		oR = targOutT  + adder;//* 1.1;
+		iR = targInT - adder;//* .9;
+
+	}
+	cx[MID].fillStyle = 'RGB(255,255,255)';
+	cx[MID].globalAlpha = .7;//'RGB(255,255,255)';
+	cx[MID].beginPath();
+	cx[MID].arc(targCen[0], targCen[1], targCircT-liner, 0, 2 * Math.PI);
+	cx[MID].fill();
+	cx[MID].fillStyle = 'black';
+	cx[MID].globalAlpha = 1;
+	cx[MID].stroke();
+	cx[MID].lineWidth = 3;
+	cx[MID].fillStyle = 'RGB(255,255,255)';
+	
+	cx[MID].fillStyle = 'RGB(25,124,247)';
+	cx[MID].beginPath();
+	cx[MID].arc(targCen[0], targCen[1], oR, sAng, eAng);
+	cx[MID].arc(targCen[0], targCen[1], iR, eAng, sAng, true);
+	cx[MID].fill(); */
+	
+}
+
+function interp(xmin, x, xmax, ymin, ymax)
+{
+	if(xmax == xmin) return 0;
+	else return ymin + (ymax - ymin) * (x - xmin)/(xmax - xmin);
+}
+
+function interpLog(xmin, x, xmax, ymin, ymax)
+{
+	var fact = 3;
+	xmin = Math.pow(xmin, fact);//log(xmin);
+	xmax = Math.pow(xmax, fact);Math.log(xmax);
+	x = Math.pow(x, fact);Math.log(x);
+	console.log(xmin + ', ' + x + ', ' + xmax);
+	
+	if(xmax == xmin) return 0;
+	else return ymin + (ymax - ymin) * (x - xmin)/(xmax - xmin);
+}
 function distance(arr1, arr2)
 {
 	return Math.pow(Math.pow(arr1[0] - arr2[0], 2) + Math.pow(arr1[1] - arr2[1], 2) ,.5);
 }
 var scrnBut = {
-	prevent: false,
 	imgInd: 0,
 	action: function(){
 		//do nothing
 	}
 };
-var ZOOM_COL = 0;
+
 var menuBut = {
-	prevent: true,
 	imgInd: 1,
 	action: function(){
 		//load menu
 	}
 };
 var restartBut = {
-	prevent: true,
 	imgInd: 2,
 	action: function(){
 		loadLevel(false);
 	}
 };
 var undoBut = {
-	prevent: true,
 	imgInd: 3,
 	action: function(){
 		//undo
 	}
 };
 var hintsBut = {
-	prevent: true,
 	imgInd: 4,
 	action: function(){
 		//toggle hints
 	}
 };
 var butts = [scrnBut, menuBut, restartBut, undoBut, hintsBut]; 
+
 var butImg = document.createElement("img");
-butImg.onload = function() 
+butImg.onload = setupGame();
+
+function setupGame() 
 {
 	setTimeout(function () 
 	{
-		backCx.save();
-		/* for(var i = 0; i < butts.length; i += 1)
+		//find the zoom button
+		for(var i = 0; i < butts.length; i+=1)
 		{
-			console.log(butts[i].prevent);
-		} */
+			if(butts[i] === scrnBut)
+			{
+				SELECT_ZOOM_COL = i;
+				break;
+			}
+		}
+		
+		
+		//create canvases
+		for(var i = 0; i < 3; i += 1)
+		{
+			var newCanv = document.createElement("canvas");
+			
+			newCanv.style = "z-index: " + i + "; position: absolute; left: 0px; top: 0px;";
+			canv.push(newCanv);
+			cx.push(newCanv.getContext("2d"));
+			mainDiv.appendChild(newCanv);
+		}
+
+				
+		
+		//start looping
 		animate();
 	}, 300);
-/* 	loaded += 1;
-	if(loaded == 1) startIt(); */
+
 }
 butImg.src = "buttons.png";
 </script>

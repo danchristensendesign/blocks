@@ -371,8 +371,8 @@ function reConfigure()
 	
 	for(var i = 0; i < canv.length; i += 1)
 	{
-		canv[i].width = scrn.w;
-		canv[i].height = scrn.h;
+		canv[i].width = scrn.w + scrollAmt;
+		canv[i].height = scrn.h + scrollAmt;
 		cx[i].restore();
 		cx[i].save();
 		cx[i].translate(0, scrn.t);
